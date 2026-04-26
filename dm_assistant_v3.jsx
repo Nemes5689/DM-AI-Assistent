@@ -1,0 +1,2689 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Skull, Swords, Scroll, Plus, Minus, X, Sparkles, Heart, Shield, Loader2, Trash2, Settings, Key, ExternalLink, Check } from 'lucide-react';
+
+// =============================================================================
+// MONSTER DATA - embedded subset; can be replaced with full 513-monster JSON
+// =============================================================================
+const MONSTERS = [
+  {"name":"Aarakocra Aeromancer","cr":"4","type":"Elemental","size":"Medium","ac_hp":"16/66","url":"https://www.aidedd.org/monster/aarakocra-aeromancer"},
+  {"name":"Aarakocra Skirmisher","cr":"1/4","type":"Elemental","size":"Medium","ac_hp":"12/11","url":"https://www.aidedd.org/monster/aarakocra-skirmisher"},
+  {"name":"Aberrant Cultist","cr":"8","type":"","size":"Medium","ac_hp":"14/137","url":"https://www.aidedd.org/monster/aberrant-cultist"},
+  {"name":"Aberrant Spirit","cr":"","type":"Aberration","size":"Medium","ac_hp":"11/40","url":"https://www.aidedd.org/monster/aberrant-spirit"},
+  {"name":"Aboleth","cr":"10","type":"Aberration","size":"Large","ac_hp":"17/150","url":"https://www.aidedd.org/monster/aboleth"},
+  {"name":"Abominable Yeti","cr":"9","type":"Monstrosity","size":"Huge","ac_hp":"15/137","url":"https://www.aidedd.org/monster/abominable-yeti"},
+  {"name":"Adult Black Dragon","cr":"14","type":"Dragon (Chromatic)","size":"Huge","ac_hp":"19/195","url":"https://www.aidedd.org/monster/adult-black-dragon"},
+  {"name":"Adult Blue Dragon","cr":"16","type":"Dragon (Chromatic)","size":"Huge","ac_hp":"19/212","url":"https://www.aidedd.org/monster/adult-blue-dragon"},
+  {"name":"Adult Brass Dragon","cr":"13","type":"Dragon (Metallic)","size":"Huge","ac_hp":"18/172","url":"https://www.aidedd.org/monster/adult-brass-dragon"},
+  {"name":"Adult Bronze Dragon","cr":"15","type":"Dragon (Metallic)","size":"Huge","ac_hp":"18/212","url":"https://www.aidedd.org/monster/adult-bronze-dragon"},
+  {"name":"Adult Copper Dragon","cr":"14","type":"Dragon (Metallic)","size":"Huge","ac_hp":"18/184","url":"https://www.aidedd.org/monster/adult-copper-dragon"},
+  {"name":"Adult Gold Dragon","cr":"17","type":"Dragon (Metallic)","size":"Huge","ac_hp":"19/243","url":"https://www.aidedd.org/monster/adult-gold-dragon"},
+  {"name":"Adult Green Dragon","cr":"15","type":"Dragon (Chromatic)","size":"Huge","ac_hp":"19/207","url":"https://www.aidedd.org/monster/adult-green-dragon"},
+  {"name":"Adult Red Dragon","cr":"17","type":"Dragon (Chromatic)","size":"Huge","ac_hp":"19/256","url":"https://www.aidedd.org/monster/adult-red-dragon"},
+  {"name":"Adult Silver Dragon","cr":"16","type":"Dragon (Metallic)","size":"Huge","ac_hp":"19/216","url":"https://www.aidedd.org/monster/adult-silver-dragon"},
+  {"name":"Adult White Dragon","cr":"13","type":"Dragon (Chromatic)","size":"Huge","ac_hp":"18/200","url":"https://www.aidedd.org/monster/adult-white-dragon"},
+  {"name":"Air Elemental","cr":"5","type":"Elemental","size":"Large","ac_hp":"15/90","url":"https://www.aidedd.org/monster/air-elemental"},
+  {"name":"Allosaurus","cr":"2","type":"Beast (Dinosaur)","size":"Large","ac_hp":"13/51","url":"https://www.aidedd.org/monster/allosaurus"},
+  {"name":"Ancient Black Dragon","cr":"21","type":"Dragon (Chromatic)","size":"Gargantuan","ac_hp":"22/367","url":"https://www.aidedd.org/monster/ancient-black-dragon"},
+  {"name":"Ancient Blue Dragon","cr":"23","type":"Dragon (Chromatic)","size":"Gargantuan","ac_hp":"22/481","url":"https://www.aidedd.org/monster/ancient-blue-dragon"},
+  {"name":"Ancient Brass Dragon","cr":"20","type":"Dragon (Metallic)","size":"Gargantuan","ac_hp":"20/332","url":"https://www.aidedd.org/monster/ancient-brass-dragon"},
+  {"name":"Ancient Bronze Dragon","cr":"22","type":"Dragon (Metallic)","size":"Gargantuan","ac_hp":"22/444","url":"https://www.aidedd.org/monster/ancient-bronze-dragon"},
+  {"name":"Ancient Copper Dragon","cr":"21","type":"Dragon (Metallic)","size":"Gargantuan","ac_hp":"21/367","url":"https://www.aidedd.org/monster/ancient-copper-dragon"},
+  {"name":"Ancient Gold Dragon","cr":"24","type":"Dragon (Metallic)","size":"Gargantuan","ac_hp":"22/546","url":"https://www.aidedd.org/monster/ancient-gold-dragon"},
+  {"name":"Ancient Green Dragon","cr":"22","type":"Dragon (Chromatic)","size":"Gargantuan","ac_hp":"21/402","url":"https://www.aidedd.org/monster/ancient-green-dragon"},
+  {"name":"Ancient Red Dragon","cr":"24","type":"Dragon (Chromatic)","size":"Gargantuan","ac_hp":"22/507","url":"https://www.aidedd.org/monster/ancient-red-dragon"},
+  {"name":"Ancient Silver Dragon","cr":"23","type":"Dragon (Metallic)","size":"Gargantuan","ac_hp":"22/468","url":"https://www.aidedd.org/monster/ancient-silver-dragon"},
+  {"name":"Ancient White Dragon","cr":"20","type":"Dragon (Chromatic)","size":"Gargantuan","ac_hp":"20/333","url":"https://www.aidedd.org/monster/ancient-white-dragon"},
+  {"name":"Animal Lord","cr":"20","type":"Celestial","size":"Medium","ac_hp":"19/323","url":"https://www.aidedd.org/monster/animal-lord"},
+  {"name":"Animated Armor","cr":"1","type":"Construct","size":"Medium","ac_hp":"18/33","url":"https://www.aidedd.org/monster/animated-armor"},
+  {"name":"Animated Broom","cr":"1/4","type":"Construct","size":"Small","ac_hp":"15/14","url":"https://www.aidedd.org/monster/animated-broom"},
+  {"name":"Animated Flying Sword","cr":"1/4","type":"Construct","size":"Small","ac_hp":"17/14","url":"https://www.aidedd.org/monster/animated-flying-sword"},
+  {"name":"Animated Object","cr":"","type":"","size":"Huge","ac_hp":"15/10","url":"https://www.aidedd.org/monster/animated-object"},
+  {"name":"Animated Rug of Smothering","cr":"2","type":"Construct","size":"Large","ac_hp":"12/27","url":"https://www.aidedd.org/monster/animated-rug-of-smothering"},
+  {"name":"Ankheg","cr":"2","type":"Monstrosity","size":"Large","ac_hp":"14/45","url":"https://www.aidedd.org/monster/ankheg"},
+  {"name":"Ankylosaurus","cr":"3","type":"Beast (Dinosaur)","size":"Huge","ac_hp":"15/68","url":"https://www.aidedd.org/monster/ankylosaurus"},
+  {"name":"Ape","cr":"1/2","type":"Beast","size":"Medium","ac_hp":"12/19","url":"https://www.aidedd.org/monster/ape"},
+  {"name":"Arcanaloth","cr":"12","type":"Fiend (Yugoloth)","size":"Medium","ac_hp":"18/175","url":"https://www.aidedd.org/monster/arcanaloth"},
+  {"name":"Arch-hag","cr":"21","type":"Fey","size":"Large","ac_hp":"20/333","url":"https://www.aidedd.org/monster/arch-hag"},
+  {"name":"Archelon","cr":"4","type":"Beast (Dinosaur)","size":"Huge","ac_hp":"17/90","url":"https://www.aidedd.org/monster/archelon"},
+  {"name":"Archmage","cr":"12","type":"","size":"Medium","ac_hp":"17/170","url":"https://www.aidedd.org/monster/archmage"},
+  {"name":"Archpriest","cr":"12","type":"","size":"Medium","ac_hp":"16/240","url":"https://www.aidedd.org/monster/archpriest"},
+  {"name":"Assassin","cr":"8","type":"","size":"Medium","ac_hp":"16/97","url":"https://www.aidedd.org/monster/assassin"},
+  {"name":"Awakened Shrub","cr":"0","type":"Plant","size":"Small","ac_hp":"9/10","url":"https://www.aidedd.org/monster/awakened-shrub"},
+  {"name":"Awakened Tree","cr":"2","type":"Plant","size":"Huge","ac_hp":"13/59","url":"https://www.aidedd.org/monster/awakened-tree"},
+  {"name":"Axe Beak","cr":"1/4","type":"Monstrosity","size":"Large","ac_hp":"11/19","url":"https://www.aidedd.org/monster/axe-beak"},
+  {"name":"Azer Pyromancer","cr":"6","type":"Elemental","size":"Medium","ac_hp":"18/97","url":"https://www.aidedd.org/monster/azer-pyromancer"},
+  {"name":"Azer Sentinel","cr":"2","type":"Elemental","size":"Medium","ac_hp":"17/39","url":"https://www.aidedd.org/monster/azer-sentinel"},
+  {"name":"Baboon","cr":"0","type":"Beast","size":"Small","ac_hp":"12/3","url":"https://www.aidedd.org/monster/baboon"},
+  {"name":"Badger","cr":"0","type":"Beast","size":"Tiny","ac_hp":"11/5","url":"https://www.aidedd.org/monster/badger"},
+  {"name":"Balor","cr":"19","type":"Fiend (Demon)","size":"Huge","ac_hp":"19/287","url":"https://www.aidedd.org/monster/balor"},
+  {"name":"Bandit","cr":"1/8","type":"","size":"Medium","ac_hp":"12/11","url":"https://www.aidedd.org/monster/bandit"},
+  {"name":"Bandit Captain","cr":"2","type":"","size":"Medium","ac_hp":"15/52","url":"https://www.aidedd.org/monster/bandit-captain"},
+  {"name":"Bandit Crime Lord","cr":"11","type":"","size":"Medium","ac_hp":"17/169","url":"https://www.aidedd.org/monster/bandit-crime-lord"},
+  {"name":"Bandit Deceiver","cr":"7","type":"","size":"Medium","ac_hp":"16/130","url":"https://www.aidedd.org/monster/bandit-deceiver"},
+  {"name":"Banshee","cr":"4","type":"Undead","size":"Medium","ac_hp":"12/54","url":"https://www.aidedd.org/monster/banshee"},
+  {"name":"Barbed Devil","cr":"5","type":"Fiend (Devil)","size":"Medium","ac_hp":"15/110","url":"https://www.aidedd.org/monster/barbed-devil"},
+  {"name":"Barlgura","cr":"5","type":"Fiend (Demon)","size":"Large","ac_hp":"15/85","url":"https://www.aidedd.org/monster/barlgura"},
+  {"name":"Basilisk","cr":"3","type":"Monstrosity","size":"Medium","ac_hp":"15/52","url":"https://www.aidedd.org/monster/basilisk"},
+  {"name":"Bat","cr":"0","type":"Beast","size":"Tiny","ac_hp":"12/1","url":"https://www.aidedd.org/monster/bat"},
+  {"name":"Bearded Devil","cr":"3","type":"Fiend (Devil)","size":"Medium","ac_hp":"13/58","url":"https://www.aidedd.org/monster/bearded-devil"},
+  {"name":"Beast of the Land","cr":"","type":"Beast","size":"Medium","ac_hp":"13/5","url":"https://www.aidedd.org/monster/beast-of-the-land"},
+  {"name":"Beast of the Sea","cr":"","type":"Beast","size":"Medium","ac_hp":"13/5","url":"https://www.aidedd.org/monster/beast-of-the-sea"},
+  {"name":"Beast of the Sky","cr":"","type":"Beast","size":"Small","ac_hp":"13/4","url":"https://www.aidedd.org/monster/beast-of-the-sky"},
+  {"name":"Behir","cr":"11","type":"Monstrosity","size":"Huge","ac_hp":"17/168","url":"https://www.aidedd.org/monster/behir"},
+  {"name":"Beholder","cr":"13","type":"Aberration","size":"Large","ac_hp":"18/190","url":"https://www.aidedd.org/monster/beholder"},
+  {"name":"Beholder Zombie","cr":"5","type":"Undead","size":"Large","ac_hp":"15/93","url":"https://www.aidedd.org/monster/beholder-zombie"},
+  {"name":"Berserker","cr":"2","type":"","size":"Medium","ac_hp":"13/67","url":"https://www.aidedd.org/monster/berserker"},
+  {"name":"Berserker Commander","cr":"8","type":"","size":"Medium","ac_hp":"16/136","url":"https://www.aidedd.org/monster/berserker-commander"},
+  {"name":"Bestial Spirit","cr":"","type":"Beast","size":"Small","ac_hp":"11/20","url":"https://www.aidedd.org/monster/bestial-spirit"},
+  {"name":"Black Bear","cr":"1/2","type":"Beast","size":"Medium","ac_hp":"11/19","url":"https://www.aidedd.org/monster/black-bear"},
+  {"name":"Black Dragon Wyrmling","cr":"2","type":"Dragon (Chromatic)","size":"Medium","ac_hp":"17/33","url":"https://www.aidedd.org/monster/black-dragon-wyrmling"},
+  {"name":"Black Pudding","cr":"4","type":"Ooze","size":"Large","ac_hp":"7/68","url":"https://www.aidedd.org/monster/black-pudding"},
+  {"name":"Blink Dog","cr":"1/4","type":"Fey","size":"Medium","ac_hp":"13/16","url":"https://www.aidedd.org/monster/blink-dog"},
+  {"name":"Blob of Annihilation","cr":"23","type":"Ooze (Titan)","size":"Gargantuan","ac_hp":"18/448","url":"https://www.aidedd.org/monster/blob-of-annihilation"},
+  {"name":"Blood Hawk","cr":"1/8","type":"Beast","size":"Small","ac_hp":"12/7","url":"https://www.aidedd.org/monster/blood-hawk"},
+  {"name":"Blue Dragon Wyrmling","cr":"3","type":"Dragon (Chromatic)","size":"Medium","ac_hp":"17/65","url":"https://www.aidedd.org/monster/blue-dragon-wyrmling"},
+  {"name":"Blue Slaad","cr":"7","type":"Aberration","size":"Large","ac_hp":"15/133","url":"https://www.aidedd.org/monster/blue-slaad"},
+  {"name":"Boar","cr":"1/4","type":"Beast","size":"Medium","ac_hp":"11/13","url":"https://www.aidedd.org/monster/boar"},
+  {"name":"Bone Devil","cr":"9","type":"Fiend (Devil)","size":"Large","ac_hp":"16/161","url":"https://www.aidedd.org/monster/bone-devil"},
+  {"name":"Bone Naga","cr":"4","type":"Undead","size":"Large","ac_hp":"15/65","url":"https://www.aidedd.org/monster/bone-naga"},
+  {"name":"Brass Dragon Wyrmling","cr":"1","type":"Dragon (Metallic)","size":"Medium","ac_hp":"15/22","url":"https://www.aidedd.org/monster/brass-dragon-wyrmling"},
+  {"name":"Brazen Gorgon","cr":"9","type":"Construct","size":"Large","ac_hp":"19/161","url":"https://www.aidedd.org/monster/brazen-gorgon"},
+  {"name":"Bronze Dragon Wyrmling","cr":"2","type":"Dragon (Metallic)","size":"Medium","ac_hp":"15/39","url":"https://www.aidedd.org/monster/bronze-dragon-wyrmling"},
+  {"name":"Brown Bear","cr":"1","type":"Beast","size":"Large","ac_hp":"11/22","url":"https://www.aidedd.org/monster/brown-bear"},
+  {"name":"Bugbear Stalker","cr":"3","type":"Fey (Goblinoid)","size":"Medium","ac_hp":"15/65","url":"https://www.aidedd.org/monster/bugbear-stalker"},
+  {"name":"Bugbear Warrior","cr":"1","type":"Fey (Goblinoid)","size":"Medium","ac_hp":"14/33","url":"https://www.aidedd.org/monster/bugbear-warrior"},
+  {"name":"Bulette","cr":"5","type":"Monstrosity","size":"Large","ac_hp":"17/94","url":"https://www.aidedd.org/monster/bulette"},
+  {"name":"Bulette Pup","cr":"2","type":"Monstrosity","size":"Medium","ac_hp":"16/45","url":"https://www.aidedd.org/monster/bulette-pup"},
+  {"name":"Bullywug Bog Sage","cr":"4","type":"Fey","size":"Medium","ac_hp":"16/52","url":"https://www.aidedd.org/monster/bullywug-bog-sage"},
+  {"name":"Bullywug Warrior","cr":"1/4","type":"Fey","size":"Medium","ac_hp":"15/11","url":"https://www.aidedd.org/monster/bullywug-warrior"},
+  {"name":"Cambion","cr":"5","type":"Fiend","size":"Medium","ac_hp":"19/105","url":"https://www.aidedd.org/monster/cambion"},
+  {"name":"Camel","cr":"1/8","type":"Beast","size":"Large","ac_hp":"10/17","url":"https://www.aidedd.org/monster/camel"},
+  {"name":"Carrion Crawler","cr":"2","type":"Monstrosity","size":"Large","ac_hp":"13/51","url":"https://www.aidedd.org/monster/carrion-crawler"},
+  {"name":"Cat","cr":"0","type":"Beast","size":"Tiny","ac_hp":"12/2","url":"https://www.aidedd.org/monster/cat"},
+  {"name":"Celestial Spirit","cr":"","type":"Celestial","size":"Large","ac_hp":"11/40","url":"https://www.aidedd.org/monster/celestial-spirit"},
+  {"name":"Centaur Trooper","cr":"2","type":"Fey","size":"Large","ac_hp":"16/45","url":"https://www.aidedd.org/monster/centaur-trooper"},
+  {"name":"Centaur Warden","cr":"7","type":"Fey","size":"Large","ac_hp":"16/105","url":"https://www.aidedd.org/monster/centaur-warden"},
+  {"name":"Chain Devil","cr":"8","type":"Fiend (Devil)","size":"Medium","ac_hp":"15/85","url":"https://www.aidedd.org/monster/chain-devil"},
+  {"name":"Chasme","cr":"6","type":"Fiend (Demon)","size":"Large","ac_hp":"15/78","url":"https://www.aidedd.org/monster/chasme"},
+  {"name":"Chimera","cr":"6","type":"Monstrosity","size":"Large","ac_hp":"14/114","url":"https://www.aidedd.org/monster/chimera"},
+  {"name":"Chuul","cr":"4","type":"Aberration","size":"Large","ac_hp":"16/76","url":"https://www.aidedd.org/monster/chuul"},
+  {"name":"Clay Golem","cr":"9","type":"Construct","size":"Large","ac_hp":"14/123","url":"https://www.aidedd.org/monster/clay-golem"},
+  {"name":"Cloaker","cr":"8","type":"Aberration","size":"Large","ac_hp":"14/91","url":"https://www.aidedd.org/monster/cloaker"},
+  {"name":"Cloud Giant","cr":"9","type":"Giant","size":"Huge","ac_hp":"14/200","url":"https://www.aidedd.org/monster/cloud-giant"},
+  {"name":"Cockatrice","cr":"1/2","type":"Monstrosity","size":"Small","ac_hp":"11/22","url":"https://www.aidedd.org/monster/cockatrice"},
+  {"name":"Cockatrice Regent","cr":"8","type":"Monstrosity","size":"Large","ac_hp":"15/136","url":"https://www.aidedd.org/monster/cockatrice-regent"},
+  {"name":"Colossus","cr":"25","type":"Construct (Titan)","size":"Gargantuan","ac_hp":"23/553","url":"https://www.aidedd.org/monster/colossus"},
+  {"name":"Commoner","cr":"0","type":"","size":"Medium","ac_hp":"10/4","url":"https://www.aidedd.org/monster/commoner"},
+  {"name":"Constrictor Snake","cr":"1/4","type":"Beast","size":"Large","ac_hp":"13/13","url":"https://www.aidedd.org/monster/constrictor-snake"},
+  {"name":"Construct Spirit","cr":"","type":"Construct","size":"Medium","ac_hp":"13/40","url":"https://www.aidedd.org/monster/construct-spirit"},
+  {"name":"Copper Dragon Wyrmling","cr":"1","type":"Dragon (Metallic)","size":"Medium","ac_hp":"16/22","url":"https://www.aidedd.org/monster/copper-dragon-wyrmling"},
+  {"name":"Couatl","cr":"4","type":"Celestial","size":"Medium","ac_hp":"19/60","url":"https://www.aidedd.org/monster/couatl"},
+  {"name":"Crab","cr":"0","type":"Beast","size":"Tiny","ac_hp":"11/3","url":"https://www.aidedd.org/monster/crab"},
+  {"name":"Crawling Claw","cr":"0","type":"Undead","size":"Tiny","ac_hp":"12/2","url":"https://www.aidedd.org/monster/crawling-claw"},
+  {"name":"Crocodile","cr":"1/2","type":"Beast","size":"Large","ac_hp":"12/13","url":"https://www.aidedd.org/monster/crocodile"},
+  {"name":"Cultist","cr":"1/8","type":"","size":"Medium","ac_hp":"12/9","url":"https://www.aidedd.org/monster/cultist"},
+  {"name":"Cultist Fanatic","cr":"2","type":"","size":"Medium","ac_hp":"13/44","url":"https://www.aidedd.org/monster/cultist-fanatic"},
+  {"name":"Cultist Hierophant","cr":"10","type":"","size":"Medium","ac_hp":"16/144","url":"https://www.aidedd.org/monster/cultist-hierophant"},
+  {"name":"Cyclops Oracle","cr":"10","type":"Giant","size":"Huge","ac_hp":"16/207","url":"https://www.aidedd.org/monster/cyclops-oracle"},
+  {"name":"Cyclops Sentry","cr":"6","type":"Giant","size":"Huge","ac_hp":"14/138","url":"https://www.aidedd.org/monster/cyclops-sentry"},
+  {"name":"Dao","cr":"11","type":"Elemental (Genie)","size":"Large","ac_hp":"18/200","url":"https://www.aidedd.org/monster/dao"},
+  {"name":"Darkmantle","cr":"1/2","type":"Aberration","size":"Small","ac_hp":"11/22","url":"https://www.aidedd.org/monster/darkmantle"},
+  {"name":"Death Cultist","cr":"8","type":"","size":"Medium","ac_hp":"17/127","url":"https://www.aidedd.org/monster/death-cultist"},
+  {"name":"Death Dog","cr":"1","type":"Monstrosity","size":"Medium","ac_hp":"12/39","url":"https://www.aidedd.org/monster/death-dog"},
+  {"name":"Death Knight","cr":"17","type":"","size":"Medium","ac_hp":"20/199","url":"https://www.aidedd.org/monster/death-knight"},
+  {"name":"Death Knight Aspirant","cr":"11","type":"","size":"Medium","ac_hp":"20/178","url":"https://www.aidedd.org/monster/death-knight-aspirant"},
+  {"name":"Death Slaad","cr":"10","type":"Aberration","size":"Medium","ac_hp":"18/178","url":"https://www.aidedd.org/monster/death-slaad"},
+  {"name":"Death Tyrant","cr":"14","type":"Undead (Beholder)","size":"Large","ac_hp":"19/195","url":"https://www.aidedd.org/monster/death-tyrant"},
+  {"name":"Deer","cr":"0","type":"Beast","size":"Medium","ac_hp":"13/4","url":"https://www.aidedd.org/monster/deer"},
+  {"name":"Demilich","cr":"18","type":"Undead","size":"Tiny","ac_hp":"20/180","url":"https://www.aidedd.org/monster/demilich"},
+  {"name":"Deva","cr":"10","type":"Celestial (Angel)","size":"Medium","ac_hp":"17/229","url":"https://www.aidedd.org/monster/deva"},
+  {"name":"Dire Wolf","cr":"1","type":"Beast","size":"Large","ac_hp":"14/22","url":"https://www.aidedd.org/monster/dire-wolf"},
+  {"name":"Dire Worg","cr":"10","type":"Fey","size":"Huge","ac_hp":"16/147","url":"https://www.aidedd.org/monster/dire-worg"},
+  {"name":"Displacer Beast","cr":"3","type":"Monstrosity","size":"Large","ac_hp":"13/76","url":"https://www.aidedd.org/monster/displacer-beast"},
+  {"name":"Djinni","cr":"11","type":"Elemental (Genie)","size":"Large","ac_hp":"17/218","url":"https://www.aidedd.org/monster/djinni"},
+  {"name":"Doppelganger","cr":"3","type":"Monstrosity","size":"Medium","ac_hp":"14/52","url":"https://www.aidedd.org/monster/doppelganger"},
+  {"name":"Dracolich","cr":"17","type":"","size":"Huge","ac_hp":"20/225","url":"https://www.aidedd.org/monster/dracolich"},
+  {"name":"Draconic Spirit","cr":"","type":"Dragon","size":"Large","ac_hp":"14/50","url":"https://www.aidedd.org/monster/draconic-spirit"},
+  {"name":"Draft Horse","cr":"1/4","type":"Beast","size":"Large","ac_hp":"10/15","url":"https://www.aidedd.org/monster/draft-horse"},
+  {"name":"Dragon Turtle","cr":"17","type":"Dragon","size":"Gargantuan","ac_hp":"20/356","url":"https://www.aidedd.org/monster/dragon-turtle"},
+  {"name":"Dretch","cr":"1/4","type":"Fiend (Demon)","size":"Small","ac_hp":"11/18","url":"https://www.aidedd.org/monster/dretch"},
+  {"name":"Drider","cr":"6","type":"Monstrosity","size":"Large","ac_hp":"19/123","url":"https://www.aidedd.org/monster/drider"},
+  {"name":"Druid","cr":"2","type":"","size":"Medium","ac_hp":"13/44","url":"https://www.aidedd.org/monster/druid"},
+  {"name":"Dryad","cr":"1","type":"Fey","size":"Medium","ac_hp":"16/22","url":"https://www.aidedd.org/monster/dryad"},
+  {"name":"Dust Mephit","cr":"1/2","type":"Elemental","size":"Small","ac_hp":"12/17","url":"https://www.aidedd.org/monster/dust-mephit"},
+  {"name":"Eagle","cr":"0","type":"Beast","size":"Small","ac_hp":"12/4","url":"https://www.aidedd.org/monster/eagle"},
+  {"name":"Earth Elemental","cr":"5","type":"Elemental","size":"Large","ac_hp":"17/147","url":"https://www.aidedd.org/monster/earth-elemental"},
+  {"name":"Efreeti","cr":"11","type":"Elemental (Genie)","size":"Large","ac_hp":"17/212","url":"https://www.aidedd.org/monster/efreeti"},
+  {"name":"Elemental Cataclysm","cr":"22","type":"Elemental (Titan)","size":"Gargantuan","ac_hp":"20/370","url":"https://www.aidedd.org/monster/elemental-cataclysm"},
+  {"name":"Elemental Cultist","cr":"8","type":"","size":"Medium","ac_hp":"16/135","url":"https://www.aidedd.org/monster/elemental-cultist"},
+  {"name":"Elemental Spirit","cr":"","type":"Elemental","size":"Medium","ac_hp":"11/50","url":"https://www.aidedd.org/monster/elemental-spirit"},
+  {"name":"Elephant","cr":"4","type":"Beast","size":"Huge","ac_hp":"12/76","url":"https://www.aidedd.org/monster/elephant"},
+  {"name":"Elk","cr":"1/4","type":"Beast","size":"Large","ac_hp":"10/11","url":"https://www.aidedd.org/monster/elk"},
+  {"name":"Empyrean","cr":"23","type":"Celestial","size":"Huge","ac_hp":"22/346","url":"https://www.aidedd.org/monster/empyrean"},
+  {"name":"Empyrean Iota","cr":"1","type":"Celestial","size":"Medium","ac_hp":"13/22","url":"https://www.aidedd.org/monster/empyrean-iota"},
+  {"name":"Erinyes","cr":"12","type":"Fiend (Devil)","size":"Medium","ac_hp":"18/178","url":"https://www.aidedd.org/monster/erinyes"},
+  {"name":"Ettercap","cr":"2","type":"Monstrosity","size":"Medium","ac_hp":"13/44","url":"https://www.aidedd.org/monster/ettercap"},
+  {"name":"Ettin","cr":"4","type":"Giant","size":"Large","ac_hp":"12/85","url":"https://www.aidedd.org/monster/ettin"},
+  {"name":"Faerie Dragon Adult","cr":"2","type":"Dragon","size":"Tiny","ac_hp":"15/35","url":"https://www.aidedd.org/monster/faerie-dragon-adult"},
+  {"name":"Faerie Dragon Youth","cr":"1","type":"Dragon","size":"Tiny","ac_hp":"13/21","url":"https://www.aidedd.org/monster/faerie-dragon-youth"},
+  {"name":"Fey Spirit","cr":"","type":"Fey","size":"Small","ac_hp":"12/30","url":"https://www.aidedd.org/monster/fey-spirit"},
+  {"name":"Fiend Cultist","cr":"8","type":"","size":"Medium","ac_hp":"16/127","url":"https://www.aidedd.org/monster/fiend-cultist"},
+  {"name":"Fiendish Spirit","cr":"","type":"Fiend","size":"Large","ac_hp":"12/50","url":"https://www.aidedd.org/monster/fiendish-spirit"},
+  {"name":"Fire Elemental","cr":"5","type":"Elemental","size":"Large","ac_hp":"13/93","url":"https://www.aidedd.org/monster/fire-elemental"},
+  {"name":"Fire Giant","cr":"9","type":"Giant","size":"Huge","ac_hp":"18/162","url":"https://www.aidedd.org/monster/fire-giant"},
+  {"name":"Flameskull","cr":"4","type":"Undead","size":"Tiny","ac_hp":"13/40","url":"https://www.aidedd.org/monster/flameskull"},
+  {"name":"Flaming Skeleton","cr":"3","type":"Undead","size":"Medium","ac_hp":"15/65","url":"https://www.aidedd.org/monster/flaming-skeleton"},
+  {"name":"Flesh Golem","cr":"5","type":"Construct","size":"Medium","ac_hp":"9/127","url":"https://www.aidedd.org/monster/flesh-golem"},
+  {"name":"Flumph","cr":"1/8","type":"Aberration","size":"Small","ac_hp":"12/7","url":"https://www.aidedd.org/monster/flumph"},
+  {"name":"Flying Snake","cr":"1/8","type":"Monstrosity","size":"Tiny","ac_hp":"14/5","url":"https://www.aidedd.org/monster/flying-snake"},
+  {"name":"Fomorian","cr":"8","type":"Giant","size":"Huge","ac_hp":"14/172","url":"https://www.aidedd.org/monster/fomorian"},
+  {"name":"Frog","cr":"0","type":"Beast","size":"Tiny","ac_hp":"11/1","url":"https://www.aidedd.org/monster/frog"},
+  {"name":"Frost Giant","cr":"8","type":"Giant","size":"Huge","ac_hp":"15/149","url":"https://www.aidedd.org/monster/frost-giant"},
+  {"name":"Galeb Duhr","cr":"6","type":"Elemental","size":"Medium","ac_hp":"16/123","url":"https://www.aidedd.org/monster/galeb-duhr"},
+  {"name":"Gargoyle","cr":"2","type":"Elemental","size":"Medium","ac_hp":"15/67","url":"https://www.aidedd.org/monster/gargoyle"},
+  {"name":"Gas Spore Fungus","cr":"1/2","type":"Plant","size":"Large","ac_hp":"8/13","url":"https://www.aidedd.org/monster/gas-spore-fungus"},
+  {"name":"Gelatinous Cube","cr":"2","type":"Ooze","size":"Large","ac_hp":"6/63","url":"https://www.aidedd.org/monster/gelatinous-cube"},
+  {"name":"Ghast","cr":"2","type":"Undead","size":"Medium","ac_hp":"13/36","url":"https://www.aidedd.org/monster/ghast"},
+  {"name":"Ghast Gravecaller","cr":"6","type":"Undead","size":"Medium","ac_hp":"16/97","url":"https://www.aidedd.org/monster/ghast-gravecaller"},
+  {"name":"Ghost","cr":"4","type":"Undead","size":"Medium","ac_hp":"11/45","url":"https://www.aidedd.org/monster/ghost"},
+  {"name":"Ghoul","cr":"1","type":"Undead","size":"Medium","ac_hp":"12/22","url":"https://www.aidedd.org/monster/ghoul"},
+  {"name":"Giant Ape","cr":"7","type":"Beast","size":"Huge","ac_hp":"12/168","url":"https://www.aidedd.org/monster/giant-ape"},
+  {"name":"Giant Axe Beak","cr":"5","type":"Monstrosity","size":"Huge","ac_hp":"15/84","url":"https://www.aidedd.org/monster/giant-axe-beak"},
+  {"name":"Giant Badger","cr":"1/4","type":"Beast","size":"Medium","ac_hp":"13/15","url":"https://www.aidedd.org/monster/giant-badger"},
+  {"name":"Giant Bat","cr":"1/4","type":"Beast","size":"Large","ac_hp":"13/22","url":"https://www.aidedd.org/monster/giant-bat"},
+  {"name":"Giant Boar","cr":"2","type":"Beast","size":"Large","ac_hp":"13/42","url":"https://www.aidedd.org/monster/giant-boar"},
+  {"name":"Giant Centipede","cr":"1/4","type":"Beast","size":"Small","ac_hp":"14/9","url":"https://www.aidedd.org/monster/giant-centipede"},
+  {"name":"Giant Constrictor Snake","cr":"2","type":"Beast","size":"Huge","ac_hp":"12/60","url":"https://www.aidedd.org/monster/giant-constrictor-snake"},
+  {"name":"Giant Crab","cr":"1/8","type":"Beast","size":"Medium","ac_hp":"15/13","url":"https://www.aidedd.org/monster/giant-crab"},
+  {"name":"Giant Crocodile","cr":"5","type":"Beast","size":"Huge","ac_hp":"14/85","url":"https://www.aidedd.org/monster/giant-crocodile"},
+  {"name":"Giant Eagle","cr":"1","type":"Celestial","size":"Large","ac_hp":"13/26","url":"https://www.aidedd.org/monster/giant-eagle"},
+  {"name":"Giant Elk","cr":"2","type":"Celestial","size":"Huge","ac_hp":"14/42","url":"https://www.aidedd.org/monster/giant-elk"},
+  {"name":"Giant Fire Beetle","cr":"0","type":"Beast","size":"Small","ac_hp":"13/4","url":"https://www.aidedd.org/monster/giant-fire-beetle"},
+  {"name":"Giant Frog","cr":"1/4","type":"Beast","size":"Medium","ac_hp":"11/18","url":"https://www.aidedd.org/monster/giant-frog"},
+  {"name":"Giant Goat","cr":"1/2","type":"Beast","size":"Large","ac_hp":"11/19","url":"https://www.aidedd.org/monster/giant-goat"},
+  {"name":"Giant Hyena","cr":"1","type":"Beast","size":"Large","ac_hp":"12/45","url":"https://www.aidedd.org/monster/giant-hyena"},
+  {"name":"Giant Insect","cr":"","type":"Beast","size":"Large","ac_hp":"11/30","url":"https://www.aidedd.org/monster/giant-insect"},
+  {"name":"Giant Lizard","cr":"1/4","type":"Beast","size":"Large","ac_hp":"12/19","url":"https://www.aidedd.org/monster/giant-lizard"},
+  {"name":"Giant Octopus","cr":"1","type":"Beast","size":"Large","ac_hp":"11/45","url":"https://www.aidedd.org/monster/giant-octopus"},
+  {"name":"Giant Owl","cr":"1/4","type":"Celestial","size":"Large","ac_hp":"12/19","url":"https://www.aidedd.org/monster/giant-owl"},
+  {"name":"Giant Rat","cr":"1/8","type":"Beast","size":"Small","ac_hp":"13/7","url":"https://www.aidedd.org/monster/giant-rat"},
+  {"name":"Giant Scorpion","cr":"3","type":"Beast","size":"Large","ac_hp":"15/52","url":"https://www.aidedd.org/monster/giant-scorpion"},
+  {"name":"Giant Seahorse","cr":"1/2","type":"Beast","size":"Large","ac_hp":"14/16","url":"https://www.aidedd.org/monster/giant-seahorse"},
+  {"name":"Giant Shark","cr":"5","type":"Beast","size":"Huge","ac_hp":"13/92","url":"https://www.aidedd.org/monster/giant-shark"},
+  {"name":"Giant Spider","cr":"1","type":"Beast","size":"Large","ac_hp":"14/26","url":"https://www.aidedd.org/monster/giant-spider"},
+  {"name":"Giant Squid","cr":"6","type":"Beast","size":"Huge","ac_hp":"12/120","url":"https://www.aidedd.org/monster/giant-squid"},
+  {"name":"Giant Toad","cr":"1","type":"Beast","size":"Large","ac_hp":"11/39","url":"https://www.aidedd.org/monster/giant-toad"},
+  {"name":"Giant Venomous Snake","cr":"1/4","type":"Beast","size":"Medium","ac_hp":"14/11","url":"https://www.aidedd.org/monster/giant-venomous-snake"},
+  {"name":"Giant Vulture","cr":"1","type":"Monstrosity","size":"Large","ac_hp":"10/25","url":"https://www.aidedd.org/monster/giant-vulture"},
+  {"name":"Giant Wasp","cr":"1/2","type":"Beast","size":"Medium","ac_hp":"13/22","url":"https://www.aidedd.org/monster/giant-wasp"},
+  {"name":"Giant Weasel","cr":"1/8","type":"Beast","size":"Medium","ac_hp":"13/9","url":"https://www.aidedd.org/monster/giant-weasel"},
+  {"name":"Giant Wolf Spider","cr":"1/4","type":"Beast","size":"Medium","ac_hp":"13/11","url":"https://www.aidedd.org/monster/giant-wolf-spider"},
+  {"name":"Gibbering Mouther","cr":"2","type":"Aberration","size":"Medium","ac_hp":"9/52","url":"https://www.aidedd.org/monster/gibbering-mouther"},
+  {"name":"Githyanki Dracomancer","cr":"16","type":"Aberration (Gith)","size":"Medium","ac_hp":"18/255","url":"https://www.aidedd.org/monster/githyanki-dracomancer"},
+  {"name":"Githyanki Knight","cr":"8","type":"Aberration (Gith)","size":"Medium","ac_hp":"18/117","url":"https://www.aidedd.org/monster/githyanki-knight"},
+  {"name":"Githyanki Warrior","cr":"3","type":"Aberration (Gith)","size":"Medium","ac_hp":"17/49","url":"https://www.aidedd.org/monster/githyanki-warrior"},
+  {"name":"Githzerai Monk","cr":"2","type":"Aberration (Gith)","size":"Medium","ac_hp":"14/38","url":"https://www.aidedd.org/monster/githzerai-monk"},
+  {"name":"Githzerai Psion","cr":"12","type":"Aberration (Gith)","size":"Medium","ac_hp":"18/169","url":"https://www.aidedd.org/monster/githzerai-psion"},
+  {"name":"Githzerai Zerth","cr":"6","type":"Aberration (Gith)","size":"Medium","ac_hp":"17/84","url":"https://www.aidedd.org/monster/githzerai-zerth"},
+  {"name":"Glabrezu","cr":"9","type":"Fiend (Demon)","size":"Large","ac_hp":"17/189","url":"https://www.aidedd.org/monster/glabrezu"},
+  {"name":"Gladiator","cr":"5","type":"","size":"Medium","ac_hp":"16/112","url":"https://www.aidedd.org/monster/gladiator"},
+  {"name":"Gnoll Demoniac","cr":"8","type":"Fiend","size":"Medium","ac_hp":"16/135","url":"https://www.aidedd.org/monster/gnoll-demoniac"},
+  {"name":"Gnoll Fang of Yeenoghu","cr":"4","type":"Fiend","size":"Medium","ac_hp":"14/71","url":"https://www.aidedd.org/monster/gnoll-fang-of-yeenoghu"},
+  {"name":"Gnoll Pack Lord","cr":"2","type":"Fiend","size":"Medium","ac_hp":"15/49","url":"https://www.aidedd.org/monster/gnoll-pack-lord"},
+  {"name":"Gnoll Warrior","cr":"1/2","type":"Fiend","size":"Medium","ac_hp":"15/27","url":"https://www.aidedd.org/monster/gnoll-warrior"},
+  {"name":"Goat","cr":"0","type":"Beast","size":"Medium","ac_hp":"10/4","url":"https://www.aidedd.org/monster/goat"},
+  {"name":"Goblin Boss","cr":"1","type":"Fey (Goblinoid)","size":"Small","ac_hp":"17/21","url":"https://www.aidedd.org/monster/goblin-boss"},
+  {"name":"Goblin Hexer","cr":"3","type":"Fey (Goblinoid)","size":"Small","ac_hp":"13/45","url":"https://www.aidedd.org/monster/goblin-hexer"},
+  {"name":"Goblin Minion","cr":"1/8","type":"Fey (Goblinoid)","size":"Small","ac_hp":"12/7","url":"https://www.aidedd.org/monster/goblin-minion"},
+  {"name":"Goblin Warrior","cr":"1/4","type":"Fey (Goblinoid)","size":"Small","ac_hp":"15/10","url":"https://www.aidedd.org/monster/goblin-warrior"},
+  {"name":"Gold Dragon Wyrmling","cr":"3","type":"Dragon (Metallic)","size":"Medium","ac_hp":"17/60","url":"https://www.aidedd.org/monster/gold-dragon-wyrmling"},
+  {"name":"Gorgon","cr":"5","type":"Construct","size":"Large","ac_hp":"19/114","url":"https://www.aidedd.org/monster/gorgon"},
+  {"name":"Goristro","cr":"17","type":"Fiend (Demon)","size":"Huge","ac_hp":"19/310","url":"https://www.aidedd.org/monster/goristro"},
+  {"name":"Graveyard Revenant","cr":"7","type":"Undead","size":"Huge","ac_hp":"14/161","url":"https://www.aidedd.org/monster/graveyard-revenant"},
+  {"name":"Gray Ooze","cr":"1/2","type":"Ooze","size":"Medium","ac_hp":"9/22","url":"https://www.aidedd.org/monster/gray-ooze"},
+  {"name":"Gray Slaad","cr":"9","type":"Aberration","size":"Medium","ac_hp":"18/150","url":"https://www.aidedd.org/monster/gray-slaad"},
+  {"name":"Green Dragon Wyrmling","cr":"2","type":"Dragon (Chromatic)","size":"Medium","ac_hp":"17/38","url":"https://www.aidedd.org/monster/green-dragon-wyrmling"},
+  {"name":"Green Hag","cr":"3","type":"Fey","size":"Medium","ac_hp":"17/82","url":"https://www.aidedd.org/monster/green-hag"},
+  {"name":"Green Slaad","cr":"8","type":"Aberration","size":"Large","ac_hp":"16/144","url":"https://www.aidedd.org/monster/green-slaad"},
+  {"name":"Grell","cr":"3","type":"Aberration","size":"Medium","ac_hp":"12/55","url":"https://www.aidedd.org/monster/grell"},
+  {"name":"Grick","cr":"2","type":"Aberration","size":"Medium","ac_hp":"14/54","url":"https://www.aidedd.org/monster/grick"},
+  {"name":"Grick Ancient","cr":"7","type":"Aberration","size":"Large","ac_hp":"18/135","url":"https://www.aidedd.org/monster/grick-ancient"},
+  {"name":"Griffon","cr":"2","type":"Monstrosity","size":"Large","ac_hp":"12/59","url":"https://www.aidedd.org/monster/griffon"},
+  {"name":"Grimlock","cr":"1/4","type":"Aberration","size":"Medium","ac_hp":"11/11","url":"https://www.aidedd.org/monster/grimlock"},
+  {"name":"Guard","cr":"1/8","type":"","size":"Medium","ac_hp":"16/11","url":"https://www.aidedd.org/monster/guard"},
+  {"name":"Guard Captain","cr":"4","type":"","size":"Medium","ac_hp":"18/75","url":"https://www.aidedd.org/monster/guard-captain"},
+  {"name":"Guardian Naga","cr":"10","type":"Celestial","size":"Large","ac_hp":"18/136","url":"https://www.aidedd.org/monster/guardian-naga"},
+  {"name":"Gulthias Blight","cr":"16","type":"Plant","size":"Gargantuan","ac_hp":"20/264","url":"https://www.aidedd.org/monster/gulthias-blight"},
+  {"name":"Half-Dragon","cr":"5","type":"Dragon","size":"Medium","ac_hp":"18/105","url":"https://www.aidedd.org/monster/half-dragon"},
+  {"name":"Harpy","cr":"1","type":"Monstrosity","size":"Medium","ac_hp":"11/38","url":"https://www.aidedd.org/monster/harpy"},
+  {"name":"Haunting Revenant","cr":"10","type":"Undead","size":"Gargantuan","ac_hp":"20/203","url":"https://www.aidedd.org/monster/haunting-revenant"},
+  {"name":"Hawk","cr":"0","type":"Beast","size":"Tiny","ac_hp":"13/1","url":"https://www.aidedd.org/monster/hawk"},
+  {"name":"Hell Hound","cr":"3","type":"Fiend","size":"Medium","ac_hp":"15/58","url":"https://www.aidedd.org/monster/hell-hound"},
+  {"name":"Helmed Horror","cr":"4","type":"Construct","size":"Medium","ac_hp":"20/67","url":"https://www.aidedd.org/monster/helmed-horror"},
+  {"name":"Hezrou","cr":"8","type":"Fiend (Demon)","size":"Large","ac_hp":"18/157","url":"https://www.aidedd.org/monster/hezrou"},
+  {"name":"Hill Giant","cr":"5","type":"Giant","size":"Huge","ac_hp":"13/105","url":"https://www.aidedd.org/monster/hill-giant"},
+  {"name":"Hippogriff","cr":"1","type":"Monstrosity","size":"Large","ac_hp":"11/26","url":"https://www.aidedd.org/monster/hippogriff"},
+  {"name":"Hippopotamus","cr":"4","type":"Beast","size":"Large","ac_hp":"14/82","url":"https://www.aidedd.org/monster/hippopotamus"},
+  {"name":"Hobgoblin Captain","cr":"3","type":"Fey (Goblinoid)","size":"Medium","ac_hp":"17/58","url":"https://www.aidedd.org/monster/hobgoblin-captain"},
+  {"name":"Hobgoblin Warlord","cr":"6","type":"Fey (Goblinoid)","size":"Medium","ac_hp":"20/112","url":"https://www.aidedd.org/monster/hobgoblin-warlord"},
+  {"name":"Hobgoblin Warrior","cr":"1/2","type":"Fey (Goblinoid)","size":"Medium","ac_hp":"18/11","url":"https://www.aidedd.org/monster/hobgoblin-warrior"},
+  {"name":"Homunculus","cr":"0","type":"Construct","size":"Tiny","ac_hp":"13/4","url":"https://www.aidedd.org/monster/homunculus"},
+  {"name":"Hook Horror","cr":"3","type":"Monstrosity","size":"Large","ac_hp":"15/75","url":"https://www.aidedd.org/monster/hook-horror"},
+  {"name":"Horned Devil","cr":"11","type":"Fiend (Devil)","size":"Large","ac_hp":"18/199","url":"https://www.aidedd.org/monster/horned-devil"},
+  {"name":"Hunter Shark","cr":"2","type":"Beast","size":"Large","ac_hp":"12/45","url":"https://www.aidedd.org/monster/hunter-shark"},
+  {"name":"Hydra","cr":"8","type":"Monstrosity","size":"Huge","ac_hp":"15/184","url":"https://www.aidedd.org/monster/hydra"},
+  {"name":"Hyena","cr":"0","type":"Beast","size":"Medium","ac_hp":"11/5","url":"https://www.aidedd.org/monster/hyena"},
+  {"name":"Ice Devil","cr":"14","type":"Fiend (Devil)","size":"Large","ac_hp":"18/228","url":"https://www.aidedd.org/monster/ice-devil"},
+  {"name":"Ice Mephit","cr":"1/2","type":"Elemental","size":"Small","ac_hp":"11/21","url":"https://www.aidedd.org/monster/ice-mephit"},
+  {"name":"Imp","cr":"1","type":"Fiend (Devil)","size":"Tiny","ac_hp":"13/21","url":"https://www.aidedd.org/monster/imp"},
+  {"name":"Incubus","cr":"4","type":"Fiend","size":"Medium","ac_hp":"15/66","url":"https://www.aidedd.org/monster/incubus"},
+  {"name":"Intellect Devourer","cr":"2","type":"Aberration","size":"Tiny","ac_hp":"12/28","url":"https://www.aidedd.org/monster/intellect-devourer"},
+  {"name":"Invisible Stalker","cr":"6","type":"Elemental","size":"Large","ac_hp":"14/97","url":"https://www.aidedd.org/monster/invisible-stalker"},
+  {"name":"Iron Golem","cr":"16","type":"Construct","size":"Large","ac_hp":"20/252","url":"https://www.aidedd.org/monster/iron-golem"},
+  {"name":"Jackal","cr":"0","type":"Beast","size":"Small","ac_hp":"12/3","url":"https://www.aidedd.org/monster/jackal"},
+  {"name":"Jackalwere","cr":"1/2","type":"Fiend","size":"Small","ac_hp":"12/18","url":"https://www.aidedd.org/monster/jackalwere"},
+  {"name":"Juvenile Shadow Dragon","cr":"4","type":"Dragon","size":"Medium","ac_hp":"15/45","url":"https://www.aidedd.org/monster/juvenile-shadow-dragon"},
+  {"name":"Kenku","cr":"1/4","type":"Monstrosity","size":"Medium","ac_hp":"13/13","url":"https://www.aidedd.org/monster/kenku"},
+  {"name":"Killer Whale","cr":"3","type":"Beast","size":"Huge","ac_hp":"12/90","url":"https://www.aidedd.org/monster/killer-whale"},
+  {"name":"Knight","cr":"3","type":"","size":"Medium","ac_hp":"18/52","url":"https://www.aidedd.org/monster/knight"},
+  {"name":"Kobold Warrior","cr":"1/8","type":"Dragon","size":"Small","ac_hp":"14/7","url":"https://www.aidedd.org/monster/kobold-warrior"},
+  {"name":"Kraken","cr":"23","type":"Monstrosity (Titan)","size":"Gargantuan","ac_hp":"18/481","url":"https://www.aidedd.org/monster/kraken"},
+  {"name":"Kuo-toa","cr":"1/4","type":"Aberration","size":"Medium","ac_hp":"13/18","url":"https://www.aidedd.org/monster/kuo-toa"},
+  {"name":"Kuo-toa Archpriest","cr":"6","type":"Aberration","size":"Medium","ac_hp":"13/105","url":"https://www.aidedd.org/monster/kuo-toa-archpriest"},
+  {"name":"Kuo-toa Monitor","cr":"3","type":"Aberration","size":"Medium","ac_hp":"13/65","url":"https://www.aidedd.org/monster/kuo-toa-monitor"},
+  {"name":"Kuo-toa Whip","cr":"1","type":"Aberration","size":"Medium","ac_hp":"11/45","url":"https://www.aidedd.org/monster/kuo-toa-whip"},
+  {"name":"Lacedon Ghoul","cr":"1","type":"Undead","size":"Medium","ac_hp":"12/22","url":"https://www.aidedd.org/monster/lacedon-ghoul"},
+  {"name":"Lamia","cr":"4","type":"Fiend","size":"Large","ac_hp":"13/97","url":"https://www.aidedd.org/monster/lamia"},
+  {"name":"Larva","cr":"0","type":"Fiend","size":"Medium","ac_hp":"9/9","url":"https://www.aidedd.org/monster/larva"},
+  {"name":"Lemure","cr":"0","type":"Fiend (Devil)","size":"Medium","ac_hp":"9/9","url":"https://www.aidedd.org/monster/lemure"},
+  {"name":"Lich","cr":"21","type":"Undead (Wizard)","size":"Medium","ac_hp":"20/315","url":"https://www.aidedd.org/monster/lich"},
+  {"name":"Lion","cr":"1","type":"Beast","size":"Large","ac_hp":"12/22","url":"https://www.aidedd.org/monster/lion"},
+  {"name":"Lizard","cr":"0","type":"Beast","size":"Tiny","ac_hp":"10/2","url":"https://www.aidedd.org/monster/lizard"},
+  {"name":"Lizardfolk Geomancer","cr":"2","type":"Elemental","size":"Medium","ac_hp":"13/33","url":"https://www.aidedd.org/monster/lizardfolk-geomancer"},
+  {"name":"Lizardfolk Sovereign","cr":"4","type":"Elemental","size":"Medium","ac_hp":"15/78","url":"https://www.aidedd.org/monster/lizardfolk-sovereign"},
+  {"name":"Mage","cr":"6","type":"","size":"Medium","ac_hp":"15/81","url":"https://www.aidedd.org/monster/mage"},
+  {"name":"Mage Apprentice","cr":"2","type":"","size":"Medium","ac_hp":"15/49","url":"https://www.aidedd.org/monster/mage-apprentice"},
+  {"name":"Magma Mephit","cr":"1/2","type":"Elemental","size":"Small","ac_hp":"11/18","url":"https://www.aidedd.org/monster/magma-mephit"},
+  {"name":"Magmin","cr":"1/2","type":"Elemental","size":"Small","ac_hp":"14/13","url":"https://www.aidedd.org/monster/magmin"},
+  {"name":"Mammoth","cr":"6","type":"Beast","size":"Huge","ac_hp":"13/126","url":"https://www.aidedd.org/monster/mammoth"},
+  {"name":"Manes","cr":"1/8","type":"Fiend (Demon)","size":"Small","ac_hp":"9/9","url":"https://www.aidedd.org/monster/manes"},
+  {"name":"Manes Vaporspawn","cr":"1","type":"Fiend (Demon)","size":"Medium","ac_hp":"13/19","url":"https://www.aidedd.org/monster/manes-vaporspawn"},
+  {"name":"Manticore","cr":"3","type":"Monstrosity","size":"Large","ac_hp":"14/68","url":"https://www.aidedd.org/monster/manticore"},
+  {"name":"Marid","cr":"11","type":"Elemental (Genie)","size":"Large","ac_hp":"17/229","url":"https://www.aidedd.org/monster/marid"},
+  {"name":"Marilith","cr":"16","type":"Fiend (Demon)","size":"Large","ac_hp":"16/220","url":"https://www.aidedd.org/monster/marilith"},
+  {"name":"Mastiff","cr":"1/8","type":"Beast","size":"Medium","ac_hp":"12/5","url":"https://www.aidedd.org/monster/mastiff"},
+  {"name":"Medusa","cr":"6","type":"Monstrosity","size":"Medium","ac_hp":"15/127","url":"https://www.aidedd.org/monster/medusa"},
+  {"name":"Merfolk Skirmisher","cr":"1/8","type":"Elemental","size":"Medium","ac_hp":"11/11","url":"https://www.aidedd.org/monster/merfolk-skirmisher"},
+  {"name":"Merfolk Wavebender","cr":"6","type":"Elemental","size":"Medium","ac_hp":"14/97","url":"https://www.aidedd.org/monster/merfolk-wavebender"},
+  {"name":"Merrow","cr":"2","type":"Monstrosity","size":"Large","ac_hp":"13/45","url":"https://www.aidedd.org/monster/merrow"},
+  {"name":"Mezzoloth","cr":"5","type":"Fiend (Yugoloth)","size":"Medium","ac_hp":"18/75","url":"https://www.aidedd.org/monster/mezzoloth"},
+  {"name":"Mimic","cr":"2","type":"Monstrosity","size":"Medium","ac_hp":"12/58","url":"https://www.aidedd.org/monster/mimic"},
+  {"name":"Mind Flayer","cr":"7","type":"Aberration","size":"Medium","ac_hp":"15/99","url":"https://www.aidedd.org/monster/mind-flayer"},
+  {"name":"Mind Flayer Arcanist","cr":"11","type":"Aberration","size":"Medium","ac_hp":"16/143","url":"https://www.aidedd.org/monster/mind-flayer-arcanist"},
+  {"name":"Minotaur of Baphomet","cr":"3","type":"Monstrosity","size":"Large","ac_hp":"14/85","url":"https://www.aidedd.org/monster/minotaur-of-baphomet"},
+  {"name":"Minotaur Skeleton","cr":"2","type":"Undead","size":"Large","ac_hp":"12/45","url":"https://www.aidedd.org/monster/minotaur-skeleton"},
+  {"name":"Mud Mephit","cr":"1/4","type":"Elemental","size":"Small","ac_hp":"11/13","url":"https://www.aidedd.org/monster/mud-mephit"},
+  {"name":"Mule","cr":"1/8","type":"Beast","size":"Medium","ac_hp":"10/11","url":"https://www.aidedd.org/monster/mule"},
+  {"name":"Mummy","cr":"3","type":"","size":"Medium","ac_hp":"11/58","url":"https://www.aidedd.org/monster/mummy"},
+  {"name":"Mummy Lord","cr":"15","type":"","size":"Medium","ac_hp":"17/187","url":"https://www.aidedd.org/monster/mummy-lord"},
+  {"name":"Myconid Adult","cr":"1/2","type":"Plant","size":"Medium","ac_hp":"12/16","url":"https://www.aidedd.org/monster/myconid-adult"},
+  {"name":"Myconid Sovereign","cr":"2","type":"Plant","size":"Large","ac_hp":"13/45","url":"https://www.aidedd.org/monster/myconid-sovereign"},
+  {"name":"Myconid Spore Servant","cr":"1","type":"","size":"Medium","ac_hp":"13/37","url":"https://www.aidedd.org/monster/myconid-spore-servant"},
+  {"name":"Myconid Sprout","cr":"0","type":"Plant","size":"Small","ac_hp":"10/3","url":"https://www.aidedd.org/monster/myconid-sprout"},
+  {"name":"Nalfeshnee","cr":"13","type":"Fiend (Demon)","size":"Large","ac_hp":"18/184","url":"https://www.aidedd.org/monster/nalfeshnee"},
+  {"name":"Needle Blight","cr":"1/4","type":"Plant","size":"Medium","ac_hp":"12/16","url":"https://www.aidedd.org/monster/needle-blight"},
+  {"name":"Night Hag","cr":"5","type":"Fiend","size":"Medium","ac_hp":"17/112","url":"https://www.aidedd.org/monster/night-hag"},
+  {"name":"Nightmare","cr":"3","type":"Fiend","size":"Large","ac_hp":"13/68","url":"https://www.aidedd.org/monster/nightmare"},
+  {"name":"Noble","cr":"1/8","type":"","size":"Medium","ac_hp":"15/9","url":"https://www.aidedd.org/monster/noble"},
+  {"name":"Noble Prodigy","cr":"10","type":"","size":"Medium","ac_hp":"16/148","url":"https://www.aidedd.org/monster/noble-prodigy"},
+  {"name":"Nothic","cr":"2","type":"Aberration","size":"Medium","ac_hp":"15/45","url":"https://www.aidedd.org/monster/nothic"},
+  {"name":"Nycaloth","cr":"9","type":"Fiend (Yugoloth)","size":"Large","ac_hp":"18/152","url":"https://www.aidedd.org/monster/nycaloth"},
+  {"name":"Ochre Jelly","cr":"2","type":"Ooze","size":"Large","ac_hp":"8/52","url":"https://www.aidedd.org/monster/ochre-jelly"},
+  {"name":"Octopus","cr":"0","type":"Beast","size":"Small","ac_hp":"12/3","url":"https://www.aidedd.org/monster/octopus"},
+  {"name":"Ogre","cr":"2","type":"Giant","size":"Large","ac_hp":"11/68","url":"https://www.aidedd.org/monster/ogre"},
+  {"name":"Ogre Zombie","cr":"2","type":"Undead","size":"Large","ac_hp":"8/85","url":"https://www.aidedd.org/monster/ogre-zombie"},
+  {"name":"Ogrillon Ogre","cr":"1","type":"Giant","size":"Large","ac_hp":"12/52","url":"https://www.aidedd.org/monster/ogrillon-ogre"},
+  {"name":"Oni","cr":"7","type":"Fiend","size":"Large","ac_hp":"17/119","url":"https://www.aidedd.org/monster/oni"},
+  {"name":"Otherworldly Steed","cr":"","type":"Celestial","size":"Large","ac_hp":"10/5","url":"https://www.aidedd.org/monster/otherworldly-steed"},
+  {"name":"Otyugh","cr":"5","type":"Aberration","size":"Large","ac_hp":"14/104","url":"https://www.aidedd.org/monster/otyugh"},
+  {"name":"Owl","cr":"0","type":"Beast","size":"Tiny","ac_hp":"11/1","url":"https://www.aidedd.org/monster/owl"},
+  {"name":"Owlbear","cr":"3","type":"Monstrosity","size":"Large","ac_hp":"13/59","url":"https://www.aidedd.org/monster/owlbear"},
+  {"name":"Panther","cr":"1/4","type":"Beast","size":"Medium","ac_hp":"13/13","url":"https://www.aidedd.org/monster/panther"},
+  {"name":"Pegasus","cr":"2","type":"Celestial","size":"Large","ac_hp":"12/59","url":"https://www.aidedd.org/monster/pegasus"},
+  {"name":"Performer","cr":"1/2","type":"","size":"Medium","ac_hp":"13/27","url":"https://www.aidedd.org/monster/performer"},
+  {"name":"Performer Legend","cr":"10","type":"","size":"Medium","ac_hp":"20/162","url":"https://www.aidedd.org/monster/performer-legend"},
+  {"name":"Performer Maestro","cr":"6","type":"","size":"Medium","ac_hp":"18/110","url":"https://www.aidedd.org/monster/performer-maestro"},
+  {"name":"Peryton","cr":"2","type":"Monstrosity","size":"Medium","ac_hp":"13/33","url":"https://www.aidedd.org/monster/peryton"},
+  {"name":"Phase Spider","cr":"3","type":"Monstrosity","size":"Large","ac_hp":"14/45","url":"https://www.aidedd.org/monster/phase-spider"},
+  {"name":"Piercer","cr":"1/2","type":"Aberration","size":"Medium","ac_hp":"15/22","url":"https://www.aidedd.org/monster/piercer"},
+  {"name":"Piranha","cr":"0","type":"Beast","size":"Tiny","ac_hp":"13/1","url":"https://www.aidedd.org/monster/piranha"},
+  {"name":"Pirate","cr":"1","type":"","size":"Medium","ac_hp":"14/33","url":"https://www.aidedd.org/monster/pirate"},
+  {"name":"Pirate Admiral","cr":"12","type":"","size":"Medium","ac_hp":"20/182","url":"https://www.aidedd.org/monster/pirate-admiral"},
+  {"name":"Pirate Captain","cr":"6","type":"","size":"Medium","ac_hp":"17/84","url":"https://www.aidedd.org/monster/pirate-captain"},
+  {"name":"Pit Fiend","cr":"20","type":"Fiend (Devil)","size":"Large","ac_hp":"21/337","url":"https://www.aidedd.org/monster/pit-fiend"},
+  {"name":"Pixie","cr":"1/4","type":"Fey","size":"Tiny","ac_hp":"15/9","url":"https://www.aidedd.org/monster/pixie"},
+  {"name":"Pixie Wonderbringer","cr":"5","type":"Fey","size":"Tiny","ac_hp":"15/60","url":"https://www.aidedd.org/monster/pixie-wonderbringer"},
+  {"name":"Planetar","cr":"16","type":"Celestial (Angel)","size":"Large","ac_hp":"19/262","url":"https://www.aidedd.org/monster/planetar"},
+  {"name":"Plesiosaurus","cr":"2","type":"Beast (Dinosaur)","size":"Large","ac_hp":"13/68","url":"https://www.aidedd.org/monster/plesiosaurus"},
+  {"name":"Polar Bear","cr":"2","type":"Beast","size":"Large","ac_hp":"12/42","url":"https://www.aidedd.org/monster/polar-bear"},
+  {"name":"Poltergeist","cr":"2","type":"","size":"Medium","ac_hp":"12/22","url":"https://www.aidedd.org/monster/poltergeist"},
+  {"name":"Pony","cr":"1/8","type":"Beast","size":"Medium","ac_hp":"10/11","url":"https://www.aidedd.org/monster/pony"},
+  {"name":"Priest","cr":"2","type":"","size":"Medium","ac_hp":"13/38","url":"https://www.aidedd.org/monster/priest"},
+  {"name":"Priest Acolyte","cr":"1/4","type":"","size":"Medium","ac_hp":"13/11","url":"https://www.aidedd.org/monster/priest-acolyte"},
+  {"name":"Primeval Owlbear","cr":"7","type":"Monstrosity","size":"Huge","ac_hp":"16/126","url":"https://www.aidedd.org/monster/primeval-owlbear"},
+  {"name":"Pseudodragon","cr":"1/4","type":"Dragon","size":"Tiny","ac_hp":"14/10","url":"https://www.aidedd.org/monster/pseudodragon"},
+  {"name":"Psychic Gray Ooze","cr":"1","type":"Ooze","size":"Medium","ac_hp":"9/37","url":"https://www.aidedd.org/monster/psychic-gray-ooze"},
+  {"name":"Pteranodon","cr":"1/4","type":"Beast (Dinosaur)","size":"Medium","ac_hp":"13/13","url":"https://www.aidedd.org/monster/pteranodon"},
+  {"name":"Purple Worm","cr":"15","type":"Monstrosity","size":"Gargantuan","ac_hp":"18/247","url":"https://www.aidedd.org/monster/purple-worm"},
+  {"name":"Quaggoth","cr":"2","type":"Monstrosity","size":"Medium","ac_hp":"13/45","url":"https://www.aidedd.org/monster/quaggoth"},
+  {"name":"Quaggoth Thonot","cr":"3","type":"Monstrosity","size":"Medium","ac_hp":"15/67","url":"https://www.aidedd.org/monster/quaggoth-thonot"},
+  {"name":"Quasit","cr":"1","type":"Fiend (Demon)","size":"Tiny","ac_hp":"13/25","url":"https://www.aidedd.org/monster/quasit"},
+  {"name":"Questing Knight","cr":"12","type":"","size":"Medium","ac_hp":"18/202","url":"https://www.aidedd.org/monster/questing-knight"},
+  {"name":"Rakshasa","cr":"13","type":"Fiend","size":"Medium","ac_hp":"17/221","url":"https://www.aidedd.org/monster/rakshasa"},
+  {"name":"Rat","cr":"0","type":"Beast","size":"Tiny","ac_hp":"10/1","url":"https://www.aidedd.org/monster/rat"},
+  {"name":"Raven","cr":"0","type":"Beast","size":"Tiny","ac_hp":"12/2","url":"https://www.aidedd.org/monster/raven"},
+  {"name":"Red Dragon Wyrmling","cr":"4","type":"Dragon (Chromatic)","size":"Medium","ac_hp":"17/75","url":"https://www.aidedd.org/monster/red-dragon-wyrmling"},
+  {"name":"Red Slaad","cr":"5","type":"Aberration","size":"Large","ac_hp":"14/93","url":"https://www.aidedd.org/monster/red-slaad"},
+  {"name":"Reef Shark","cr":"1/2","type":"Beast","size":"Medium","ac_hp":"12/22","url":"https://www.aidedd.org/monster/reef-shark"},
+  {"name":"Remorhaz","cr":"11","type":"Monstrosity","size":"Huge","ac_hp":"17/195","url":"https://www.aidedd.org/monster/remorhaz"},
+  {"name":"Revenant","cr":"5","type":"Undead","size":"Medium","ac_hp":"13/127","url":"https://www.aidedd.org/monster/revenant"},
+  {"name":"Rhinoceros","cr":"2","type":"Beast","size":"Large","ac_hp":"13/45","url":"https://www.aidedd.org/monster/rhinoceros"},
+  {"name":"Riding Horse","cr":"1/4","type":"Beast","size":"Large","ac_hp":"11/13","url":"https://www.aidedd.org/monster/riding-horse"},
+  {"name":"Roc","cr":"11","type":"Monstrosity","size":"Gargantuan","ac_hp":"15/248","url":"https://www.aidedd.org/monster/roc"},
+  {"name":"Roper","cr":"5","type":"Aberration","size":"Large","ac_hp":"20/93","url":"https://www.aidedd.org/monster/roper"},
+  {"name":"Rust Monster","cr":"1/2","type":"Monstrosity","size":"Medium","ac_hp":"14/33","url":"https://www.aidedd.org/monster/rust-monster"},
+  {"name":"Saber-Toothed Tiger","cr":"2","type":"Beast","size":"Large","ac_hp":"13/52","url":"https://www.aidedd.org/monster/saber-toothed-tiger"},
+  {"name":"Sahuagin Baron","cr":"5","type":"Fiend","size":"Large","ac_hp":"16/76","url":"https://www.aidedd.org/monster/sahuagin-baron"},
+  {"name":"Sahuagin Priest","cr":"2","type":"Fiend","size":"Medium","ac_hp":"12/38","url":"https://www.aidedd.org/monster/sahuagin-priest"},
+  {"name":"Sahuagin Warrior","cr":"1/2","type":"Fiend","size":"Medium","ac_hp":"12/22","url":"https://www.aidedd.org/monster/sahuagin-warrior"},
+  {"name":"Salamander","cr":"5","type":"Elemental","size":"Large","ac_hp":"15/90","url":"https://www.aidedd.org/monster/salamander"},
+  {"name":"Salamander Fire Snake","cr":"1","type":"Elemental","size":"Medium","ac_hp":"14/27","url":"https://www.aidedd.org/monster/salamander-fire-snake"},
+  {"name":"Salamander Inferno Master","cr":"15","type":"Elemental","size":"Large","ac_hp":"18/256","url":"https://www.aidedd.org/monster/salamander-inferno-master"},
+  {"name":"Satyr","cr":"1/2","type":"Fey","size":"Medium","ac_hp":"13/31","url":"https://www.aidedd.org/monster/satyr"},
+  {"name":"Satyr Revelmaster","cr":"6","type":"Fey","size":"Medium","ac_hp":"17/82","url":"https://www.aidedd.org/monster/satyr-revelmaster"},
+  {"name":"Scarecrow","cr":"1","type":"Construct","size":"Medium","ac_hp":"11/27","url":"https://www.aidedd.org/monster/scarecrow"},
+  {"name":"Scorpion","cr":"0","type":"Beast","size":"Tiny","ac_hp":"11/1","url":"https://www.aidedd.org/monster/scorpion"},
+  {"name":"Scout","cr":"1/2","type":"","size":"Medium","ac_hp":"13/16","url":"https://www.aidedd.org/monster/scout"},
+  {"name":"Scout Captain","cr":"3","type":"","size":"Medium","ac_hp":"15/66","url":"https://www.aidedd.org/monster/scout-captain"},
+  {"name":"Sea Hag","cr":"2","type":"Fey","size":"Medium","ac_hp":"14/52","url":"https://www.aidedd.org/monster/sea-hag"},
+  {"name":"Seahorse","cr":"0","type":"Beast","size":"Tiny","ac_hp":"12/1","url":"https://www.aidedd.org/monster/seahorse"},
+  {"name":"Shadow","cr":"1/2","type":"Undead","size":"Medium","ac_hp":"12/27","url":"https://www.aidedd.org/monster/shadow"},
+  {"name":"Shadow Demon","cr":"4","type":"Fiend (Demon)","size":"Medium","ac_hp":"14/66","url":"https://www.aidedd.org/monster/shadow-demon"},
+  {"name":"Shadow Dragon","cr":"13","type":"Dragon","size":"Huge","ac_hp":"16/189","url":"https://www.aidedd.org/monster/shadow-dragon"},
+  {"name":"Shambling Mound","cr":"5","type":"Plant","size":"Large","ac_hp":"15/110","url":"https://www.aidedd.org/monster/shambling-mound"},
+  {"name":"Shield Guardian","cr":"7","type":"Construct","size":"Large","ac_hp":"17/142","url":"https://www.aidedd.org/monster/shield-guardian"},
+  {"name":"Shrieker Fungus","cr":"0","type":"Plant","size":"Medium","ac_hp":"5/13","url":"https://www.aidedd.org/monster/shrieker-fungus"},
+  {"name":"Silver Dragon Wyrmling","cr":"2","type":"Dragon (Metallic)","size":"Medium","ac_hp":"17/45","url":"https://www.aidedd.org/monster/silver-dragon-wyrmling"},
+  {"name":"Skeleton","cr":"1/4","type":"Undead","size":"Medium","ac_hp":"14/13","url":"https://www.aidedd.org/monster/skeleton"},
+  {"name":"Slaad Tadpole","cr":"1/8","type":"Aberration","size":"Tiny","ac_hp":"12/7","url":"https://www.aidedd.org/monster/slaad-tadpole"},
+  {"name":"Smoke Mephit","cr":"1/4","type":"Elemental","size":"Small","ac_hp":"12/13","url":"https://www.aidedd.org/monster/smoke-mephit"},
+  {"name":"Solar","cr":"21","type":"Celestial (Angel)","size":"Large","ac_hp":"21/297","url":"https://www.aidedd.org/monster/solar"},
+  {"name":"Spectator","cr":"3","type":"Aberration (Beholder)","size":"Medium","ac_hp":"14/45","url":"https://www.aidedd.org/monster/spectator"},
+  {"name":"Specter","cr":"1","type":"Undead","size":"Medium","ac_hp":"12/22","url":"https://www.aidedd.org/monster/specter"},
+  {"name":"Sphinx of Lore","cr":"11","type":"Celestial","size":"Large","ac_hp":"17/170","url":"https://www.aidedd.org/monster/sphinx-of-lore"},
+  {"name":"Sphinx of Secrets","cr":"8","type":"Celestial","size":"Large","ac_hp":"16/136","url":"https://www.aidedd.org/monster/sphinx-of-secrets"},
+  {"name":"Sphinx of Valor","cr":"17","type":"Celestial","size":"Large","ac_hp":"17/199","url":"https://www.aidedd.org/monster/sphinx-of-valor"},
+  {"name":"Sphinx of Wonder","cr":"1","type":"Celestial","size":"Tiny","ac_hp":"13/24","url":"https://www.aidedd.org/monster/sphinx-of-wonder"},
+  {"name":"Spider","cr":"0","type":"Beast","size":"Tiny","ac_hp":"12/1","url":"https://www.aidedd.org/monster/spider"},
+  {"name":"Spined Devil","cr":"2","type":"Fiend (Devil)","size":"Small","ac_hp":"13/45","url":"https://www.aidedd.org/monster/spined-devil"},
+  {"name":"Spirit Naga","cr":"8","type":"Fiend","size":"Large","ac_hp":"17/135","url":"https://www.aidedd.org/monster/spirit-naga"},
+  {"name":"Sprite","cr":"1/4","type":"Fey","size":"Tiny","ac_hp":"15/10","url":"https://www.aidedd.org/monster/sprite"},
+  {"name":"Spy","cr":"1","type":"","size":"Medium","ac_hp":"12/27","url":"https://www.aidedd.org/monster/spy"},
+  {"name":"Spy Master","cr":"10","type":"","size":"Medium","ac_hp":"19/137","url":"https://www.aidedd.org/monster/spy-master"},
+  {"name":"Steam Mephit","cr":"1/4","type":"Elemental","size":"Small","ac_hp":"10/17","url":"https://www.aidedd.org/monster/steam-mephit"},
+  {"name":"Stirge","cr":"1/8","type":"Monstrosity","size":"Tiny","ac_hp":"13/5","url":"https://www.aidedd.org/monster/stirge"},
+  {"name":"Stone Giant","cr":"7","type":"Giant","size":"Huge","ac_hp":"17/126","url":"https://www.aidedd.org/monster/stone-giant"},
+  {"name":"Stone Golem","cr":"10","type":"Construct","size":"Large","ac_hp":"18/220","url":"https://www.aidedd.org/monster/stone-golem"},
+  {"name":"Storm Giant","cr":"13","type":"Giant","size":"Huge","ac_hp":"16/230","url":"https://www.aidedd.org/monster/storm-giant"},
+  {"name":"Succubus","cr":"4","type":"Fiend","size":"Medium","ac_hp":"15/71","url":"https://www.aidedd.org/monster/succubus"},
+  {"name":"Swarm of Bats","cr":"1/4","type":"Swarm","size":"Large","ac_hp":"12/11","url":"https://www.aidedd.org/monster/swarm-of-bats"},
+  {"name":"Swarm of Crawling Claws","cr":"3","type":"Swarm","size":"Medium","ac_hp":"12/49","url":"https://www.aidedd.org/monster/swarm-of-crawling-claws"},
+  {"name":"Swarm of Dretches","cr":"4","type":"","size":"Large","ac_hp":"12/45","url":"https://www.aidedd.org/monster/swarm-of-dretches"},
+  {"name":"Swarm of Insects","cr":"1/2","type":"Swarm","size":"Medium","ac_hp":"11/19","url":"https://www.aidedd.org/monster/swarm-of-insects"},
+  {"name":"Swarm of Larvae","cr":"1","type":"","size":"Large","ac_hp":"13/22","url":"https://www.aidedd.org/monster/swarm-of-larvae"},
+  {"name":"Swarm of Lemures","cr":"3","type":"","size":"Large","ac_hp":"12/45","url":"https://www.aidedd.org/monster/swarm-of-lemures"},
+  {"name":"Swarm of Piranhas","cr":"1","type":"Swarm","size":"Medium","ac_hp":"13/28","url":"https://www.aidedd.org/monster/swarm-of-piranhas"},
+  {"name":"Swarm of Rats","cr":"1/4","type":"Swarm","size":"Medium","ac_hp":"10/14","url":"https://www.aidedd.org/monster/swarm-of-rats"},
+  {"name":"Swarm of Ravens","cr":"1/4","type":"Swarm","size":"Medium","ac_hp":"12/11","url":"https://www.aidedd.org/monster/swarm-of-ravens"},
+  {"name":"Swarm of Stirges","cr":"2","type":"","size":"Medium","ac_hp":"14/36","url":"https://www.aidedd.org/monster/swarm-of-stirges"},
+  {"name":"Swarm of Venomous Snakes","cr":"2","type":"Swarm","size":"Medium","ac_hp":"14/36","url":"https://www.aidedd.org/monster/swarm-of-venomous-snakes"},
+  {"name":"Tarrasque","cr":"30","type":"Monstrosity (Titan)","size":"Gargantuan","ac_hp":"25/697","url":"https://www.aidedd.org/monster/tarrasque"},
+  {"name":"Thri-kreen Marauder","cr":"1","type":"Monstrosity","size":"Medium","ac_hp":"15/33","url":"https://www.aidedd.org/monster/thri-kreen-marauder"},
+  {"name":"Thri-kreen Psion","cr":"8","type":"Monstrosity","size":"Medium","ac_hp":"16/149","url":"https://www.aidedd.org/monster/thri-kreen-psion"},
+  {"name":"Tiger","cr":"1","type":"Beast","size":"Large","ac_hp":"13/30","url":"https://www.aidedd.org/monster/tiger"},
+  {"name":"Tough","cr":"1/2","type":"","size":"Medium","ac_hp":"12/32","url":"https://www.aidedd.org/monster/tough"},
+  {"name":"Tough Boss","cr":"4","type":"","size":"Medium","ac_hp":"16/82","url":"https://www.aidedd.org/monster/tough-boss"},
+  {"name":"Treant","cr":"9","type":"Plant","size":"Huge","ac_hp":"16/138","url":"https://www.aidedd.org/monster/treant"},
+  {"name":"Tree Blight","cr":"7","type":"Plant","size":"Huge","ac_hp":"15/115","url":"https://www.aidedd.org/monster/tree-blight"},
+  {"name":"Triceratops","cr":"5","type":"Beast (Dinosaur)","size":"Huge","ac_hp":"14/114","url":"https://www.aidedd.org/monster/triceratops"},
+  {"name":"Troglodyte","cr":"1/4","type":"Monstrosity","size":"Medium","ac_hp":"11/13","url":"https://www.aidedd.org/monster/troglodyte"},
+  {"name":"Troll","cr":"5","type":"Giant","size":"Large","ac_hp":"15/94","url":"https://www.aidedd.org/monster/troll"},
+  {"name":"Troll Limb","cr":"1/2","type":"Giant","size":"Small","ac_hp":"13/14","url":"https://www.aidedd.org/monster/troll-limb"},
+  {"name":"Twig Blight","cr":"1/8","type":"Plant","size":"Small","ac_hp":"14/7","url":"https://www.aidedd.org/monster/twig-blight"},
+  {"name":"Tyrannosaurus Rex","cr":"8","type":"Beast (Dinosaur)","size":"Huge","ac_hp":"13/136","url":"https://www.aidedd.org/monster/tyrannosaurus-rex"},
+  {"name":"Ultroloth","cr":"13","type":"Fiend (Yugoloth)","size":"Medium","ac_hp":"19/221","url":"https://www.aidedd.org/monster/ultroloth"},
+  {"name":"Umber Hulk","cr":"5","type":"Monstrosity","size":"Large","ac_hp":"18/93","url":"https://www.aidedd.org/monster/umber-hulk"},
+  {"name":"Undead Spirit","cr":"","type":"Undead","size":"Medium","ac_hp":"11/30","url":"https://www.aidedd.org/monster/undead-spirit"},
+  {"name":"Unicorn","cr":"5","type":"Celestial","size":"Large","ac_hp":"12/97","url":"https://www.aidedd.org/monster/unicorn"},
+  {"name":"Vampire","cr":"13","type":"","size":"Medium","ac_hp":"16/195","url":"https://www.aidedd.org/monster/vampire"},
+  {"name":"Vampire Familiar","cr":"3","type":"","size":"Medium","ac_hp":"15/65","url":"https://www.aidedd.org/monster/vampire-familiar"},
+  {"name":"Vampire Nightbringer","cr":"8","type":"","size":"Medium","ac_hp":"16/142","url":"https://www.aidedd.org/monster/vampire-nightbringer"},
+  {"name":"Vampire Spawn","cr":"5","type":"","size":"Medium","ac_hp":"16/90","url":"https://www.aidedd.org/monster/vampire-spawn"},
+  {"name":"Vampire Umbral Lord","cr":"15","type":"","size":"Medium","ac_hp":"16/187","url":"https://www.aidedd.org/monster/vampire-umbral-lord"},
+  {"name":"Venomous Snake","cr":"1/8","type":"Beast","size":"Tiny","ac_hp":"12/5","url":"https://www.aidedd.org/monster/venomous-snake"},
+  {"name":"Vine Blight","cr":"1/2","type":"Plant","size":"Medium","ac_hp":"12/19","url":"https://www.aidedd.org/monster/vine-blight"},
+  {"name":"Violet Fungus","cr":"1/4","type":"Plant","size":"Medium","ac_hp":"5/18","url":"https://www.aidedd.org/monster/violet-fungus"},
+  {"name":"Violet Fungus Necrohulk","cr":"7","type":"Plant","size":"Large","ac_hp":"17/123","url":"https://www.aidedd.org/monster/violet-fungus-necrohulk"},
+  {"name":"Vrock","cr":"6","type":"Fiend (Demon)","size":"Large","ac_hp":"15/152","url":"https://www.aidedd.org/monster/vrock"},
+  {"name":"Vulture","cr":"0","type":"Beast","size":"Medium","ac_hp":"10/5","url":"https://www.aidedd.org/monster/vulture"},
+  {"name":"Warhorse","cr":"1/2","type":"Beast","size":"Large","ac_hp":"11/19","url":"https://www.aidedd.org/monster/warhorse"},
+  {"name":"Warhorse Skeleton","cr":"1/2","type":"Undead","size":"Large","ac_hp":"13/22","url":"https://www.aidedd.org/monster/warhorse-skeleton"},
+  {"name":"Warrior Commander","cr":"10","type":"","size":"Medium","ac_hp":"18/161","url":"https://www.aidedd.org/monster/warrior-commander"},
+  {"name":"Warrior Infantry","cr":"1/8","type":"","size":"Medium","ac_hp":"13/9","url":"https://www.aidedd.org/monster/warrior-infantry"},
+  {"name":"Warrior Veteran","cr":"3","type":"","size":"Medium","ac_hp":"17/65","url":"https://www.aidedd.org/monster/warrior-veteran"},
+  {"name":"Water Elemental","cr":"5","type":"Elemental","size":"Large","ac_hp":"14/114","url":"https://www.aidedd.org/monster/water-elemental"},
+  {"name":"Water Weird","cr":"3","type":"Elemental","size":"Large","ac_hp":"13/65","url":"https://www.aidedd.org/monster/water-weird"},
+  {"name":"Weasel","cr":"0","type":"Beast","size":"Tiny","ac_hp":"13/1","url":"https://www.aidedd.org/monster/weasel"},
+  {"name":"Werebear","cr":"5","type":"","size":"Medium","ac_hp":"15/135","url":"https://www.aidedd.org/monster/werebear"},
+  {"name":"Wereboar","cr":"4","type":"","size":"Medium","ac_hp":"15/97","url":"https://www.aidedd.org/monster/wereboar"},
+  {"name":"Wererat","cr":"2","type":"","size":"Medium","ac_hp":"13/60","url":"https://www.aidedd.org/monster/wererat"},
+  {"name":"Weretiger","cr":"4","type":"","size":"Medium","ac_hp":"12/120","url":"https://www.aidedd.org/monster/weretiger"},
+  {"name":"Werewolf","cr":"3","type":"","size":"Medium","ac_hp":"15/71","url":"https://www.aidedd.org/monster/werewolf"},
+  {"name":"White Dragon Wyrmling","cr":"2","type":"Dragon (Chromatic)","size":"Medium","ac_hp":"16/32","url":"https://www.aidedd.org/monster/white-dragon-wyrmling"},
+  {"name":"Wight","cr":"3","type":"Undead","size":"Medium","ac_hp":"14/82","url":"https://www.aidedd.org/monster/wight"},
+  {"name":"Will-o'-Wisp","cr":"2","type":"Undead","size":"Tiny","ac_hp":"19/27","url":"https://www.aidedd.org/monster/will-o--wisp"},
+  {"name":"Winged Kobold","cr":"1/4","type":"Dragon","size":"Small","ac_hp":"15/10","url":"https://www.aidedd.org/monster/winged-kobold"},
+  {"name":"Winter Wolf","cr":"3","type":"Monstrosity","size":"Large","ac_hp":"13/75","url":"https://www.aidedd.org/monster/winter-wolf"},
+  {"name":"Wolf","cr":"1/4","type":"Beast","size":"Medium","ac_hp":"12/11","url":"https://www.aidedd.org/monster/wolf"},
+  {"name":"Worg","cr":"1/2","type":"Fey","size":"Large","ac_hp":"13/26","url":"https://www.aidedd.org/monster/worg"},
+  {"name":"Wraith","cr":"5","type":"","size":"Medium","ac_hp":"13/67","url":"https://www.aidedd.org/monster/wraith"},
+  {"name":"Wyvern","cr":"6","type":"Dragon","size":"Large","ac_hp":"14/127","url":"https://www.aidedd.org/monster/wyvern"},
+  {"name":"Xorn","cr":"5","type":"Elemental","size":"Medium","ac_hp":"19/84","url":"https://www.aidedd.org/monster/xorn"},
+  {"name":"Yeti","cr":"3","type":"Monstrosity","size":"Large","ac_hp":"12/51","url":"https://www.aidedd.org/monster/yeti"},
+  {"name":"Yochlol","cr":"10","type":"Fiend (Demon)","size":"Medium","ac_hp":"15/153","url":"https://www.aidedd.org/monster/yochlol"},
+  {"name":"Young Black Dragon","cr":"7","type":"Dragon (Chromatic)","size":"Large","ac_hp":"18/127","url":"https://www.aidedd.org/monster/young-black-dragon"},
+  {"name":"Young Blue Dragon","cr":"9","type":"Dragon (Chromatic)","size":"Large","ac_hp":"18/152","url":"https://www.aidedd.org/monster/young-blue-dragon"},
+  {"name":"Young Brass Dragon","cr":"6","type":"Dragon (Metallic)","size":"Large","ac_hp":"17/110","url":"https://www.aidedd.org/monster/young-brass-dragon"},
+  {"name":"Young Bronze Dragon","cr":"8","type":"Dragon (Metallic)","size":"Large","ac_hp":"17/142","url":"https://www.aidedd.org/monster/young-bronze-dragon"},
+  {"name":"Young Copper Dragon","cr":"7","type":"Dragon (Metallic)","size":"Large","ac_hp":"17/119","url":"https://www.aidedd.org/monster/young-copper-dragon"},
+  {"name":"Young Gold Dragon","cr":"10","type":"Dragon (Metallic)","size":"Large","ac_hp":"18/178","url":"https://www.aidedd.org/monster/young-gold-dragon"},
+  {"name":"Young Green Dragon","cr":"8","type":"Dragon (Chromatic)","size":"Large","ac_hp":"18/136","url":"https://www.aidedd.org/monster/young-green-dragon"},
+  {"name":"Young Red Dragon","cr":"10","type":"Dragon (Chromatic)","size":"Large","ac_hp":"18/178","url":"https://www.aidedd.org/monster/young-red-dragon"},
+  {"name":"Young Remorhaz","cr":"5","type":"Monstrosity","size":"Large","ac_hp":"14/93","url":"https://www.aidedd.org/monster/young-remorhaz"},
+  {"name":"Young Silver Dragon","cr":"9","type":"Dragon (Metallic)","size":"Large","ac_hp":"18/168","url":"https://www.aidedd.org/monster/young-silver-dragon"},
+  {"name":"Young White Dragon","cr":"6","type":"Dragon (Chromatic)","size":"Large","ac_hp":"17/123","url":"https://www.aidedd.org/monster/young-white-dragon"},
+  {"name":"Yuan-ti Abomination","cr":"7","type":"Monstrosity","size":"Large","ac_hp":"15/127","url":"https://www.aidedd.org/monster/yuan-ti-abomination"},
+  {"name":"Yuan-ti Infiltrator","cr":"1","type":"Monstrosity","size":"Medium","ac_hp":"11/40","url":"https://www.aidedd.org/monster/yuan-ti-infiltrator"},
+  {"name":"Yuan-ti Malison (Type 1)","cr":"3","type":"Monstrosity","size":"Medium","ac_hp":"12/66","url":"https://www.aidedd.org/monster/yuan-ti-malison-type-1"},
+  {"name":"Yuan-ti Malison (Type 2)","cr":"3","type":"Monstrosity","size":"Medium","ac_hp":"12/66","url":"https://www.aidedd.org/monster/yuan-ti-malison-type-2"},
+  {"name":"Yuan-ti Malison (Type 3)","cr":"3","type":"Monstrosity","size":"Medium","ac_hp":"12/66","url":"https://www.aidedd.org/monster/yuan-ti-malison-type-3"},
+  {"name":"Zombie","cr":"1/4","type":"Undead","size":"Medium","ac_hp":"8/15","url":"https://www.aidedd.org/monster/zombie"}
+];
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+const crToNumber = (cr) => {
+  if (!cr) return 0;
+  if (cr.includes('/')) {
+    const [a, b] = cr.split('/').map(Number);
+    return a / b;
+  }
+  return Number(cr);
+};
+
+const crToXP = (cr) => {
+  const xpTable = {
+    '0':10,'1/8':25,'1/4':50,'1/2':100,'1':200,'2':450,'3':700,'4':1100,'5':1800,
+    '6':2300,'7':2900,'8':3900,'9':5000,'10':5900,'11':7200,'12':8400,'13':10000,
+    '14':11500,'15':13000,'16':15000,'17':18000,'18':20000,'19':22000,'20':25000,
+    '21':33000,'22':41000,'23':50000,'24':62000,'25':75000,'30':155000
+  };
+  return xpTable[cr] || 0;
+};
+
+const SIZES = ['Tiny','Small','Medium','Large','Huge','Gargantuan'];
+const TYPES = [...new Set(MONSTERS.map(m => m.type.split(' (')[0]))].sort();
+const CRS = [...new Set(MONSTERS.map(m => m.cr))].sort((a,b) => crToNumber(a) - crToNumber(b));
+
+const sizeColor = (size) => {
+  const map = {
+    'Tiny': '#6b8e6b', 'Small': '#7da87d', 'Medium': '#a89968',
+    'Large': '#c47a3a', 'Huge': '#a64a2e', 'Gargantuan': '#7a1f1f'
+  };
+  return map[size] || '#888';
+};
+
+const typeIcon = (type) => {
+  const t = type.toLowerCase();
+  if (t.includes('dragon')) return '🐉';
+  if (t.includes('undead')) return '💀';
+  if (t.includes('fiend') || t.includes('demon') || t.includes('devil')) return '👹';
+  if (t.includes('celestial') || t.includes('angel')) return '✦';
+  if (t.includes('aberration')) return '◉';
+  if (t.includes('elemental')) return '✺';
+  if (t.includes('fey')) return '✿';
+  if (t.includes('giant')) return '⛰';
+  if (t.includes('monstrosity')) return '☠';
+  if (t.includes('beast')) return '◈';
+  if (t.includes('construct')) return '⚙';
+  if (t.includes('plant')) return '❋';
+  if (t.includes('ooze')) return '◐';
+  return '◆';
+};
+
+// =============================================================================
+// PALETTE
+// =============================================================================
+const palette = {
+  bg: '#0d0a07',
+  bgPanel: '#1a1410',
+  bgPanel2: '#231b14',
+  border: '#3d2f1f',
+  borderLight: '#5a4530',
+  parchment: '#d9c89a',
+  ink: '#1a1208',
+  blood: '#8b1a1a',
+  bloodBright: '#b22222',
+  gold: '#c9a04a',
+  goldBright: '#e8c574',
+  text: '#d4c5a2',
+  textDim: '#8b7a5a',
+  textMuted: '#6b5b3f',
+};
+
+// =============================================================================
+// OPENROUTER API CALL
+// =============================================================================
+// Auto-router: automatically selects an available free model.
+// More reliable than hard-coding a specific model name (free models come and go).
+const OPENROUTER_MODEL = "openrouter/auto";
+
+// Fallback list of known good free models, tried in order if auto fails
+const FREE_MODEL_FALLBACKS = [
+  "deepseek/deepseek-r1:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "google/gemini-2.0-flash-exp:free",
+  "qwen/qwen-2.5-72b-instruct:free",
+];
+
+async function tryModel(apiKey, model, prompt) {
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+      "HTTP-Referer": "https://grimoire.dm",
+      "X-Title": "Grimoire DM Assistant",
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.9,
+      max_tokens: 1500,
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMsg = `${response.status}`;
+    try {
+      const errorJson = JSON.parse(errorText);
+      if (errorJson.error?.message) {
+        errorMsg = errorJson.error.message;
+      }
+    } catch {}
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    err.modelTried = model;
+    throw err;
+  }
+
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  if (!text) {
+    throw new Error("Empty response from model");
+  }
+  return text.trim();
+}
+
+async function callAI(apiKey, prompt) {
+  // Try auto-router first
+  const modelsToTry = [OPENROUTER_MODEL, ...FREE_MODEL_FALLBACKS];
+  let lastError = null;
+
+  for (const model of modelsToTry) {
+    try {
+      return await tryModel(apiKey, model, prompt);
+    } catch (e) {
+      lastError = e;
+      // If it's an auth error (401/403), don't try other models — key is wrong
+      if (e.status === 401 || e.status === 403) {
+        throw new Error(`Authentication failed: ${e.message}`);
+      }
+      // Otherwise try next model
+      console.warn(`Model ${model} failed: ${e.message}, trying next...`);
+    }
+  }
+
+  throw new Error(`All free models unavailable. Last error: ${lastError?.message || 'unknown'}`);
+}
+
+// =============================================================================
+// MAIN APP
+// =============================================================================
+export default function DMAssistant() {
+  const [tab, setTab] = useState('browse');
+  const [apiKey, setApiKey] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+
+  const [encounterMonsters, setEncounterMonsters] = useState([]);
+
+  const addToEncounter = (monster) => {
+    setEncounterMonsters(prev => [...prev, { ...monster, _id: Date.now() + Math.random() }]);
+  };
+
+  // First-time setup screen
+  const showSetup = !apiKey && !showSettings;
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: `radial-gradient(ellipse at top, #1a1208 0%, ${palette.bg} 60%)`,
+      color: palette.text,
+      fontFamily: '"Crimson Text", "Cardo", Georgia, serif',
+      padding: '0',
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=IM+Fell+English+SC&display=swap');
+
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+
+        .display-font {
+          font-family: 'Cinzel', 'Trajan Pro', serif;
+          letter-spacing: 0.05em;
+        }
+
+        .smallcaps-font {
+          font-family: 'IM Fell English SC', serif;
+          letter-spacing: 0.04em;
+        }
+
+        .ornament-divider {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 14px;
+          margin: 20px 0;
+          color: ${palette.gold};
+          opacity: 0.5;
+        }
+        .ornament-divider::before,
+        .ornament-divider::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, ${palette.gold}, transparent);
+        }
+
+        .glow-text {
+          text-shadow: 0 0 18px ${palette.bloodBright}55, 0 0 4px ${palette.bloodBright}33;
+        }
+
+        .gold-glow-text {
+          text-shadow: 0 0 12px ${palette.goldBright}66;
+        }
+
+        .tab-btn {
+          background: transparent;
+          border: 1px solid ${palette.border};
+          color: ${palette.textDim};
+          padding: 12px 20px;
+          font-family: 'Cinzel', serif;
+          letter-spacing: 0.1em;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          text-transform: uppercase;
+          transition: all 0.25s ease;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          position: relative;
+        }
+
+        .tab-btn:hover {
+          color: ${palette.gold};
+          border-color: ${palette.gold};
+          background: ${palette.bgPanel2};
+        }
+
+        .tab-btn.active {
+          color: ${palette.goldBright};
+          border-color: ${palette.gold};
+          background: ${palette.bgPanel};
+          box-shadow: inset 0 0 20px ${palette.bloodBright}22;
+        }
+
+        .tab-btn.active::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 0; right: 0;
+          height: 2px;
+          background: ${palette.gold};
+        }
+
+        .panel {
+          background: ${palette.bgPanel};
+          border: 1px solid ${palette.border};
+          padding: 24px;
+          position: relative;
+        }
+
+        .panel::before {
+          content: '';
+          position: absolute;
+          top: 6px; left: 6px; right: 6px; bottom: 6px;
+          border: 1px solid ${palette.border};
+          pointer-events: none;
+          opacity: 0.5;
+        }
+
+        input, select, textarea {
+          background: ${palette.bg};
+          border: 1px solid ${palette.border};
+          color: ${palette.text};
+          padding: 10px 14px;
+          font-family: 'Crimson Text', serif;
+          font-size: 15px;
+          width: 100%;
+          outline: none;
+          transition: all 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+          border-color: ${palette.gold};
+          box-shadow: 0 0 0 1px ${palette.gold}55;
+        }
+
+        select option {
+          background: ${palette.bgPanel};
+          color: ${palette.text};
+        }
+
+        .btn-primary {
+          background: linear-gradient(180deg, ${palette.blood} 0%, #5c1010 100%);
+          color: ${palette.parchment};
+          border: 1px solid ${palette.bloodBright};
+          padding: 12px 24px;
+          font-family: 'Cinzel', serif;
+          font-weight: 600;
+          font-size: 13px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: inset 0 1px 0 ${palette.bloodBright}55, 0 2px 8px ${palette.blood}33;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+          background: linear-gradient(180deg, ${palette.bloodBright} 0%, ${palette.blood} 100%);
+          box-shadow: 0 0 16px ${palette.bloodBright}66, inset 0 1px 0 ${palette.bloodBright}77;
+        }
+
+        .btn-primary:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+
+        .btn-secondary {
+          background: ${palette.bgPanel2};
+          color: ${palette.gold};
+          border: 1px solid ${palette.border};
+          padding: 8px 14px;
+          font-family: 'Cinzel', serif;
+          font-size: 11px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+          border-color: ${palette.gold};
+          background: ${palette.bgPanel};
+        }
+
+        .monster-card {
+          background: ${palette.bgPanel2};
+          border: 1px solid ${palette.border};
+          padding: 14px 16px;
+          transition: all 0.2s;
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .monster-card::before {
+          content: '';
+          position: absolute;
+          left: 0; top: 0; bottom: 0;
+          width: 3px;
+          background: ${palette.blood};
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+
+        .monster-card:hover {
+          border-color: ${palette.gold};
+          background: ${palette.bgPanel};
+        }
+
+        .monster-card:hover::before {
+          opacity: 1;
+        }
+
+        .stat-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 8px;
+          background: ${palette.bg};
+          border: 1px solid ${palette.border};
+          font-size: 11px;
+          font-family: 'IM Fell English SC', serif;
+          color: ${palette.textDim};
+        }
+
+        .cr-badge {
+          background: ${palette.blood};
+          color: ${palette.parchment};
+          padding: 4px 10px;
+          font-family: 'Cinzel', serif;
+          font-weight: 700;
+          font-size: 12px;
+          border: 1px solid ${palette.bloodBright};
+          letter-spacing: 0.05em;
+        }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: ${palette.bg}; }
+        ::-webkit-scrollbar-thumb {
+          background: ${palette.border};
+          border: 1px solid ${palette.bg};
+        }
+        ::-webkit-scrollbar-thumb:hover { background: ${palette.borderLight}; }
+
+        .narrative-text {
+          font-family: 'Crimson Text', serif;
+          font-size: 16px;
+          line-height: 1.75;
+          color: ${palette.text};
+        }
+
+        .narrative-text p { margin: 0 0 16px; }
+
+        .narrative-text p:first-child::first-letter {
+          font-family: 'Cinzel', serif;
+          font-size: 48px;
+          float: left;
+          line-height: 0.85;
+          padding: 6px 8px 0 0;
+          color: ${palette.bloodBright};
+          font-weight: 700;
+        }
+
+        .narrative-text strong {
+          color: ${palette.goldBright};
+          font-weight: 600;
+        }
+
+        .narrative-text em {
+          color: ${palette.text};
+          font-style: italic;
+        }
+
+        @keyframes pulse-glow {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+        .pulse { animation: pulse-glow 2s ease-in-out infinite; }
+
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .spin { animation: spin-slow 1.5s linear infinite; }
+
+        .step-num {
+          width: 28px;
+          height: 28px;
+          background: ${palette.blood};
+          border: 1px solid ${palette.bloodBright};
+          color: ${palette.parchment};
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-family: 'Cinzel', serif;
+          font-weight: 700;
+          font-size: 13px;
+          flex-shrink: 0;
+        }
+      `}</style>
+
+      {/* SETUP SCREEN */}
+      {showSetup && (
+        <SetupScreen onSave={(key) => setApiKey(key)} />
+      )}
+
+      {/* SETTINGS MODAL */}
+      {showSettings && (
+        <SettingsModal
+          currentKey={apiKey}
+          onSave={(key) => { setApiKey(key); setShowSettings(false); }}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* MAIN UI */}
+      {!showSetup && (
+        <>
+          <header style={{
+            borderBottom: `2px solid ${palette.border}`,
+            padding: '32px 24px 24px',
+            textAlign: 'center',
+            background: `linear-gradient(180deg, ${palette.bgPanel} 0%, transparent 100%)`,
+            position: 'relative',
+          }}>
+            <button
+              onClick={() => setShowSettings(true)}
+              style={{
+                position: 'absolute', top: '20px', right: '24px',
+                background: palette.bgPanel2, border: `1px solid ${palette.border}`,
+                color: palette.gold, padding: '8px 12px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '6px',
+                fontFamily: 'IM Fell English SC, serif', fontSize: '11px',
+                letterSpacing: '0.1em',
+              }}
+              title="API Key Settings"
+            >
+              <Settings size={14} /> Settings
+            </button>
+
+            <div style={{
+              fontSize: '11px',
+              color: palette.textMuted,
+              letterSpacing: '0.4em',
+              marginBottom: '8px',
+              fontFamily: 'IM Fell English SC, serif',
+            }}>
+              ✦ Compendium of the Game Master ✦
+            </div>
+            <h1 className="display-font glow-text" style={{
+              fontSize: '36px',
+              fontWeight: 800,
+              margin: '0 0 8px',
+              color: palette.bloodBright,
+              letterSpacing: '0.12em',
+              lineHeight: 1.1,
+            }}>
+              GRIMOIRE
+            </h1>
+            <div style={{
+              fontFamily: 'IM Fell English SC, serif',
+              fontSize: '13px',
+              color: palette.gold,
+              letterSpacing: '0.2em',
+            }}>
+              AI-Assisted Dungeon Master's Tome
+            </div>
+          </header>
+
+          <nav style={{
+            display: 'flex',
+            gap: '0',
+            padding: '24px 24px 0',
+            maxWidth: '1280px',
+            margin: '0 auto',
+            flexWrap: 'wrap',
+          }}>
+            {[
+              { id: 'browse', label: 'Bestiary', icon: Search },
+              { id: 'encounter', label: 'Encounter Forge', icon: Swords },
+              { id: 'narrative', label: 'Lorekeeper', icon: Scroll },
+              { id: 'tracker', label: 'Battle Tracker', icon: Skull },
+              { id: 'building', label: 'Building Forge', icon: BuildingIcon },
+            ].map(t => (
+              <button
+                key={t.id}
+                className={`tab-btn ${tab === t.id ? 'active' : ''}`}
+                onClick={() => setTab(t.id)}
+                style={{ marginRight: '-1px' }}
+              >
+                <t.icon size={14} />
+                {t.label}
+              </button>
+            ))}
+          </nav>
+
+          <main style={{
+            maxWidth: '1280px',
+            margin: '0 auto',
+            padding: '24px',
+          }}>
+            {tab === 'browse' && <BestiaryTab onAddToEncounter={addToEncounter} />}
+            {tab === 'encounter' && <EncounterTab apiKey={apiKey} encounter={encounterMonsters} setEncounter={setEncounterMonsters} />}
+            {tab === 'narrative' && <NarrativeTab apiKey={apiKey} />}
+            {tab === 'tracker' && <TrackerTab encounter={encounterMonsters} />}
+            {tab === 'building' && <BuildingTab />}
+          </main>
+
+          <footer style={{
+            textAlign: 'center',
+            padding: '32px 24px',
+            color: palette.textMuted,
+            fontSize: '11px',
+            fontFamily: 'IM Fell English SC, serif',
+            letterSpacing: '0.2em',
+            borderTop: `1px solid ${palette.border}`,
+            marginTop: '40px',
+          }}>
+            ✦ Powered by OpenRouter · Free AI for all worlds ✦
+          </footer>
+        </>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// SETUP SCREEN (first-time)
+// =============================================================================
+function SetupScreen({ onSave }) {
+  const [keyInput, setKeyInput] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    if (!keyInput.trim()) {
+      setError('Please enter your API key');
+      return;
+    }
+    setTesting(true);
+    setError('');
+    try {
+      // Quick validation call
+      await callAI(keyInput.trim(), 'Reply with just the word "ok"');
+      onSave(keyInput.trim());
+    } catch (e) {
+      setError(`Key validation failed: ${e.message}`);
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '24px',
+    }}>
+      <div className="panel" style={{ maxWidth: '640px', width: '100%' }}>
+        <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+          <div style={{
+            fontSize: '11px', color: palette.textMuted,
+            letterSpacing: '0.4em', fontFamily: 'IM Fell English SC, serif',
+            marginBottom: '8px',
+          }}>
+            ✦ Welcome, Dungeon Master ✦
+          </div>
+          <h1 className="display-font glow-text" style={{
+            fontSize: '32px', fontWeight: 800, margin: '0 0 8px',
+            color: palette.bloodBright, letterSpacing: '0.12em',
+          }}>
+            GRIMOIRE
+          </h1>
+          <div style={{
+            fontFamily: 'IM Fell English SC, serif', fontSize: '13px',
+            color: palette.gold, letterSpacing: '0.2em',
+          }}>
+            One-time setup
+          </div>
+        </div>
+
+        <div className="ornament-divider" />
+
+        <div style={{ marginBottom: '20px', color: palette.text, fontSize: '15px', lineHeight: 1.7 }}>
+          To use the AI features, you'll need a <strong style={{ color: palette.goldBright }}>free OpenRouter API key</strong>. It takes 60 seconds to get one — no credit card needed, works worldwide, and gives you access to multiple free AI models.
+        </div>
+
+        <div style={{
+          background: palette.bgPanel2, border: `1px solid ${palette.border}`,
+          padding: '16px 20px', marginBottom: '20px',
+        }}>
+          <div style={{
+            fontFamily: 'IM Fell English SC, serif', color: palette.gold,
+            fontSize: '11px', letterSpacing: '0.2em', marginBottom: '14px',
+          }}>
+            ◆ HOW TO GET YOUR FREE KEY ◆
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <span className="step-num">1</span>
+              <div style={{ flex: 1 }}>
+                Go to <a
+                  href="https://openrouter.ai/sign-up"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: palette.goldBright, textDecoration: 'underline' }}
+                >
+                  openrouter.ai/sign-up <ExternalLink size={11} style={{ display: 'inline', verticalAlign: 'middle' }}/>
+                </a> and sign up (Google/GitHub/email)
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <span className="step-num">2</span>
+              <div style={{ flex: 1 }}>
+                After login, go to <a
+                  href="https://openrouter.ai/keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: palette.goldBright, textDecoration: 'underline' }}
+                >
+                  openrouter.ai/keys <ExternalLink size={11} style={{ display: 'inline', verticalAlign: 'middle' }}/>
+                </a>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <span className="step-num">3</span>
+              <div style={{ flex: 1 }}>Click <em>"Create Key"</em>, give it any name, copy the key (starts with <code style={{ color: palette.goldBright }}>sk-or-v1-...</code>)</div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <span className="step-num">4</span>
+              <div style={{ flex: 1 }}>Paste it below — and you're ready to forge encounters</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <Label>Your OpenRouter API Key</Label>
+          <div style={{ position: 'relative' }}>
+            <Key size={14} style={{
+              position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
+              color: palette.textMuted, zIndex: 1,
+            }} />
+            <input
+              type="password"
+              placeholder="sk-or-v1-..."
+              value={keyInput}
+              onChange={e => setKeyInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSave()}
+              style={{ paddingLeft: '34px' }}
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div style={{
+            background: palette.blood + '33', border: `1px solid ${palette.blood}`,
+            padding: '10px 14px', color: palette.bloodBright,
+            marginBottom: '16px', fontSize: '13px',
+          }}>
+            {error}
+          </div>
+        )}
+
+        <button
+          className="btn-primary"
+          onClick={handleSave}
+          disabled={testing}
+          style={{ width: '100%' }}
+        >
+          {testing ? (
+            <><Loader2 size={14} className="spin" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }}/> Validating...</>
+          ) : (
+            <><Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }}/> Begin</>
+          )}
+        </button>
+
+        <div style={{
+          marginTop: '16px', textAlign: 'center',
+          color: palette.textMuted, fontSize: '12px',
+          fontFamily: 'IM Fell English SC, serif',
+        }}>
+          🔒 Your key is stored only in this browser tab. Never sent to our servers.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// SETTINGS MODAL
+// =============================================================================
+function SettingsModal({ currentKey, onSave, onClose }) {
+  const [keyInput, setKeyInput] = useState(currentKey || '');
+  const [testing, setTesting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    if (!keyInput.trim()) {
+      setError('Please enter your API key');
+      return;
+    }
+    setTesting(true);
+    setError('');
+    try {
+      await callAI(keyInput.trim(), 'Reply with just the word "ok"');
+      onSave(keyInput.trim());
+    } catch (e) {
+      setError(`Key validation failed: ${e.message}`);
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(0,0,0,0.85)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 200, padding: '24px',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        className="panel"
+        style={{ maxWidth: '500px', width: '100%' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 className="display-font" style={{
+            margin: 0, color: palette.goldBright, fontSize: '22px',
+          }}>
+            <Settings size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }}/>
+            Settings
+          </h2>
+          <button onClick={onClose} style={{
+            background: 'transparent', border: 'none', color: palette.text, cursor: 'pointer',
+          }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="ornament-divider" />
+
+        <div style={{ marginBottom: '14px' }}>
+          <Label>OpenRouter API Key</Label>
+          <div style={{ position: 'relative' }}>
+            <Key size={14} style={{
+              position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
+              color: palette.textMuted, zIndex: 1,
+            }} />
+            <input
+              type="password"
+              placeholder="sk-or-v1-..."
+              value={keyInput}
+              onChange={e => setKeyInput(e.target.value)}
+              style={{ paddingLeft: '34px' }}
+            />
+          </div>
+        </div>
+
+        <div style={{ fontSize: '12px', color: palette.textDim, marginBottom: '16px' }}>
+          Need a key? Get one free at{' '}
+          <a
+            href="https://openrouter.ai/keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: palette.gold }}
+          >
+            openrouter.ai/keys
+          </a>
+        </div>
+
+        {error && (
+          <div style={{
+            background: palette.blood + '33', border: `1px solid ${palette.blood}`,
+            padding: '10px 14px', color: palette.bloodBright,
+            marginBottom: '16px', fontSize: '13px',
+          }}>
+            {error}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="btn-primary" onClick={handleSave} disabled={testing} style={{ flex: 1 }}>
+            {testing ? (
+              <><Loader2 size={14} className="spin" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }}/> Validating...</>
+            ) : (
+              <><Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }}/> Save</>
+            )}
+          </button>
+          <button className="btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// LABEL COMPONENT (shared)
+// =============================================================================
+function Label({ children }) {
+  return (
+    <div style={{
+      fontSize: '11px', color: palette.gold,
+      fontFamily: 'IM Fell English SC, serif',
+      letterSpacing: '0.15em', marginBottom: '6px',
+      textTransform: 'uppercase',
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// =============================================================================
+// TAB 1: BESTIARY
+// =============================================================================
+function BestiaryTab({ onAddToEncounter }) {
+  const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [filterSize, setFilterSize] = useState('');
+  const [filterCRMin, setFilterCRMin] = useState('');
+  const [filterCRMax, setFilterCRMax] = useState('');
+  const [selected, setSelected] = useState(null);
+
+  const filtered = useMemo(() => {
+    return MONSTERS.filter(m => {
+      if (search && !m.name.toLowerCase().includes(search.toLowerCase())) return false;
+      if (filterType && !m.type.toLowerCase().includes(filterType.toLowerCase())) return false;
+      if (filterSize && m.size !== filterSize) return false;
+      const cr = crToNumber(m.cr);
+      if (filterCRMin && cr < crToNumber(filterCRMin)) return false;
+      if (filterCRMax && cr > crToNumber(filterCRMax)) return false;
+      return true;
+    }).sort((a,b) => crToNumber(a.cr) - crToNumber(b.cr));
+  }, [search, filterType, filterSize, filterCRMin, filterCRMax]);
+
+  return (
+    <div>
+      <div className="ornament-divider">
+        <span style={{ fontFamily: 'Cinzel, serif', fontSize: '14px', letterSpacing: '0.3em', color: palette.gold }}>
+          THE BESTIARY
+        </span>
+      </div>
+
+      <div className="panel" style={{ marginBottom: '24px' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '12px',
+        }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={14} style={{
+              position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
+              color: palette.textMuted
+            }} />
+            <input
+              placeholder="Search by name..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ paddingLeft: '34px' }}
+            />
+          </div>
+          <select value={filterType} onChange={e => setFilterType(e.target.value)}>
+            <option value="">All Types</option>
+            {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <select value={filterSize} onChange={e => setFilterSize(e.target.value)}>
+            <option value="">All Sizes</option>
+            {SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={filterCRMin} onChange={e => setFilterCRMin(e.target.value)}>
+            <option value="">CR Min</option>
+            {CRS.map(c => <option key={c} value={c}>CR {c}</option>)}
+          </select>
+          <select value={filterCRMax} onChange={e => setFilterCRMax(e.target.value)}>
+            <option value="">CR Max</option>
+            {CRS.map(c => <option key={c} value={c}>CR {c}</option>)}
+          </select>
+        </div>
+        <div style={{
+          marginTop: '14px',
+          color: palette.textDim,
+          fontSize: '12px',
+          fontFamily: 'IM Fell English SC, serif',
+          letterSpacing: '0.1em',
+        }}>
+          {filtered.length} CREATURE{filtered.length !== 1 ? 'S' : ''} FOUND
+        </div>
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: '12px',
+      }}>
+        {filtered.map(m => (
+          <MonsterCard key={m.name} monster={m} onClick={() => setSelected(m)} onAdd={onAddToEncounter} />
+        ))}
+      </div>
+
+      {filtered.length === 0 && (
+        <div style={{
+          textAlign: 'center', padding: '60px',
+          color: palette.textMuted, fontFamily: 'IM Fell English SC, serif',
+        }}>
+          No creatures match thy search.
+        </div>
+      )}
+
+      {selected && <MonsterModal monster={selected} onClose={() => setSelected(null)} onAdd={onAddToEncounter} />}
+    </div>
+  );
+}
+
+function MonsterCard({ monster, onClick, onAdd }) {
+  const [ac, hp] = monster.ac_hp.split('/');
+
+  const openStatblock = (e) => {
+    e.stopPropagation();
+    if (monster.url) {
+      window.open(monster.url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  return (
+    <div
+      className="monster-card"
+      onClick={openStatblock}
+      title="Click to open full statblock on aidedd.org"
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="display-font monster-name-link" style={{
+            fontSize: '15px', color: palette.goldBright, fontWeight: 600,
+            lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', gap: '4px',
+          }}>
+            {monster.name}
+            <ExternalLink size={11} style={{ opacity: 0.5, flexShrink: 0 }} />
+          </div>
+          <div style={{
+            fontSize: '11px', color: palette.textMuted,
+            fontFamily: 'IM Fell English SC, serif', letterSpacing: '0.05em', marginTop: '2px',
+          }}>
+            <span style={{ color: sizeColor(monster.size) }}>{monster.size}</span> · {monster.type}
+          </div>
+        </div>
+        <span style={{ fontSize: '20px', opacity: 0.7 }}>{typeIcon(monster.type)}</span>
+      </div>
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <span className="cr-badge">CR {monster.cr}</span>
+        <span className="stat-pill"><Shield size={10} /> {ac}</span>
+        <span className="stat-pill"><Heart size={10} /> {hp}</span>
+        <button
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+          style={{
+            marginLeft: 'auto', background: 'transparent',
+            border: `1px solid ${palette.border}`, color: palette.textDim,
+            cursor: 'pointer', padding: '4px 6px', transition: 'all 0.2s',
+            fontSize: '10px', fontFamily: 'IM Fell English SC, serif', letterSpacing: '0.1em',
+          }}
+          title="Quick info"
+          onMouseEnter={e => { e.currentTarget.style.borderColor = palette.gold; e.currentTarget.style.color = palette.gold; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = palette.border; e.currentTarget.style.color = palette.textDim; }}
+        >
+          INFO
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onAdd(monster); }}
+          style={{
+            background: 'transparent',
+            border: `1px solid ${palette.border}`, color: palette.gold,
+            cursor: 'pointer', padding: '4px 6px', transition: 'all 0.2s',
+          }}
+          title="Add to encounter"
+          onMouseEnter={e => { e.currentTarget.style.background = palette.blood; e.currentTarget.style.color = palette.parchment; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = palette.gold; }}
+        >
+          <Plus size={12} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MonsterModal({ monster, onClose, onAdd }) {
+  const [ac, hp] = monster.ac_hp.split('/');
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 100, padding: '24px',
+    }}>
+      <div onClick={e => e.stopPropagation()} className="panel" style={{
+        maxWidth: '500px', width: '100%', background: palette.bgPanel,
+        maxHeight: '90vh', overflowY: 'auto',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+          <div>
+            <div style={{ fontSize: '32px' }}>{typeIcon(monster.type)}</div>
+            <h2 className="display-font gold-glow-text" style={{
+              margin: '8px 0 4px', color: palette.goldBright,
+              fontSize: '24px', fontWeight: 700,
+            }}>
+              {monster.name}
+            </h2>
+            <div style={{ color: palette.textDim, fontFamily: 'IM Fell English SC, serif', fontSize: '14px' }}>
+              {monster.size} {monster.type}
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            background: 'transparent', border: 'none', color: palette.text, cursor: 'pointer',
+          }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="ornament-divider" style={{ margin: '16px 0' }} />
+
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '12px', marginBottom: '20px',
+        }}>
+          <StatBlock label="Challenge" value={`CR ${monster.cr}`} sub={`${crToXP(monster.cr).toLocaleString()} XP`} />
+          <StatBlock label="Armor Class" value={ac} icon={<Shield size={14} />} />
+          <StatBlock label="Hit Points" value={hp} icon={<Heart size={14} />} />
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button className="btn-primary" onClick={() => { onAdd(monster); onClose(); }}>
+            <Plus size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+            Add to Encounter
+          </button>
+          <a href={monster.url} target="_blank" rel="noopener noreferrer"
+            className="btn-secondary"
+            style={{ textDecoration: 'none', display: 'inline-block' }}
+          >
+            View Full Statblock ↗
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatBlock({ label, value, sub, icon }) {
+  return (
+    <div style={{
+      background: palette.bgPanel2, border: `1px solid ${palette.border}`,
+      padding: '12px', textAlign: 'center',
+    }}>
+      <div style={{
+        fontSize: '10px', color: palette.textMuted,
+        fontFamily: 'IM Fell English SC, serif', letterSpacing: '0.15em', marginBottom: '4px',
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontFamily: 'Cinzel, serif', fontSize: '22px', fontWeight: 700,
+        color: palette.goldBright,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+      }}>
+        {icon}{value}
+      </div>
+      {sub && (
+        <div style={{ fontSize: '10px', color: palette.textDim, marginTop: '2px' }}>{sub}</div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// TAB 2: ENCOUNTER GENERATOR
+// =============================================================================
+function EncounterTab({ apiKey, encounter, setEncounter }) {
+  const [partySize, setPartySize] = useState(4);
+  const [partyLevel, setPartyLevel] = useState(5);
+  const [difficulty, setDifficulty] = useState('Moderate');
+  const [environment, setEnvironment] = useState('Dungeon');
+  const [thematicHint, setThematicHint] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [aiResult, setAiResult] = useState(null);
+
+  const ENVIRONMENTS = ['Dungeon','Forest','Swamp','Mountain','Underdark','Coastal','Urban','Desert','Arctic','Plains','Underwater','Ruins','Graveyard'];
+  const DIFFICULTIES = ['Low','Moderate','High'];
+
+  const XP_BUDGETS = {
+    1:{Low:50,Moderate:75,High:100}, 2:{Low:100,Moderate:150,High:200},
+    3:{Low:150,Moderate:225,High:400}, 4:{Low:250,Moderate:375,High:500},
+    5:{Low:500,Moderate:750,High:1100}, 6:{Low:600,Moderate:1000,High:1400},
+    7:{Low:750,Moderate:1300,High:1700}, 8:{Low:1000,Moderate:1700,High:2100},
+    9:{Low:1300,Moderate:2000,High:2600}, 10:{Low:1600,Moderate:2300,High:3100},
+    11:{Low:1900,Moderate:2900,High:4100}, 12:{Low:2200,Moderate:3700,High:4700},
+    13:{Low:2600,Moderate:4200,High:5400}, 14:{Low:2900,Moderate:4900,High:6200},
+    15:{Low:3300,Moderate:5400,High:7800}, 16:{Low:3800,Moderate:6100,High:9800},
+    17:{Low:4500,Moderate:7200,High:11700}, 18:{Low:5000,Moderate:8700,High:14200},
+    19:{Low:5500,Moderate:10700,High:17200}, 20:{Low:6400,Moderate:13200,High:22000},
+  };
+
+  const targetXP = (XP_BUDGETS[partyLevel]?.[difficulty] || 1000) * partySize;
+
+  const generateEncounter = async () => {
+    setLoading(true);
+    setError('');
+    setAiResult(null);
+
+    const maxCR = partyLevel + 4;
+    const candidatePool = MONSTERS.filter(m => crToNumber(m.cr) <= maxCR + 2);
+    const monsterCatalog = candidatePool.map(m => `${m.name} (CR ${m.cr}, ${crToXP(m.cr)} XP, ${m.type}, ${m.size})`).join('\n');
+
+    const prompt = `You are a Dungeon Master assistant building a D&D 2024 combat encounter.
+
+PARTY:
+- ${partySize} characters at level ${partyLevel}
+- Difficulty: ${difficulty}
+- Target XP budget (from 2024 DMG): ${targetXP} XP total
+- Environment: ${environment}
+${thematicHint ? `- Theme/Notes: ${thematicHint}` : ''}
+
+MONSTER CATALOG (only choose from these):
+${monsterCatalog}
+
+INSTRUCTIONS:
+1. Choose 1-6 monsters from the catalog that fit the environment and theme
+2. The total XP should be approximately ${targetXP} XP (within +/-20%)
+3. Mix monster types thematically (e.g., a leader + minions, or a pair + summoned creatures)
+4. For each monster, specify a quantity (1-8)
+5. Respond ONLY with valid JSON, no markdown fences, no explanation
+
+JSON FORMAT:
+{
+  "monsters": [
+    {"name": "exact monster name from catalog", "quantity": 2}
+  ],
+  "concept": "One sentence describing the encounter concept",
+  "tactics": "2-3 sentences of opening tactics and how the monsters work together"
+}`;
+
+    try {
+      const text = await callAI(apiKey, prompt);
+      const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+      const parsed = JSON.parse(cleaned);
+
+      const resolved = parsed.monsters.map(p => {
+        const m = MONSTERS.find(mon => mon.name === p.name);
+        return m ? { monster: m, quantity: p.quantity } : null;
+      }).filter(Boolean);
+
+      const totalXP = resolved.reduce((s, r) => s + crToXP(r.monster.cr) * r.quantity, 0);
+
+      setAiResult({ ...parsed, resolved, totalXP });
+    } catch (e) {
+      setError(`Failed to generate encounter: ${e.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addAllToTracker = () => {
+    if (!aiResult) return;
+    aiResult.resolved.forEach(({ monster, quantity }) => {
+      for (let i = 0; i < quantity; i++) {
+        setEncounter(prev => [...prev, { ...monster, _id: Date.now() + Math.random() + i }]);
+      }
+    });
+  };
+
+  return (
+    <div>
+      <div className="ornament-divider">
+        <span style={{ fontFamily: 'Cinzel, serif', fontSize: '14px', letterSpacing: '0.3em', color: palette.gold }}>
+          ENCOUNTER FORGE
+        </span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 360px) 1fr', gap: '24px' }}>
+        <div className="panel">
+          <div style={{ marginBottom: '14px' }}>
+            <Label>Party Size</Label>
+            <input type="number" min="1" max="8" value={partySize} onChange={e => setPartySize(Number(e.target.value))} />
+          </div>
+          <div style={{ marginBottom: '14px' }}>
+            <Label>Party Level</Label>
+            <input type="number" min="1" max="20" value={partyLevel} onChange={e => setPartyLevel(Number(e.target.value))} />
+          </div>
+          <div style={{ marginBottom: '14px' }}>
+            <Label>Difficulty</Label>
+            <select value={difficulty} onChange={e => setDifficulty(e.target.value)}>
+              {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+          <div style={{ marginBottom: '14px' }}>
+            <Label>Environment</Label>
+            <select value={environment} onChange={e => setEnvironment(e.target.value)}>
+              {ENVIRONMENTS.map(e => <option key={e} value={e}>{e}</option>)}
+            </select>
+          </div>
+          <div style={{ marginBottom: '20px' }}>
+            <Label>Thematic Notes (optional)</Label>
+            <textarea
+              rows="3"
+              placeholder="e.g., 'cult of an ancient demon lord', 'undead led by a necromancer'..."
+              value={thematicHint}
+              onChange={e => setThematicHint(e.target.value)}
+            />
+          </div>
+
+          <div style={{
+            background: palette.bg, border: `1px solid ${palette.border}`,
+            padding: '12px', marginBottom: '16px', textAlign: 'center',
+          }}>
+            <div style={{
+              fontSize: '10px', color: palette.textMuted,
+              fontFamily: 'IM Fell English SC, serif', letterSpacing: '0.15em',
+            }}>
+              TARGET XP BUDGET
+            </div>
+            <div className="display-font" style={{
+              fontSize: '24px', color: palette.goldBright, fontWeight: 700, marginTop: '4px',
+            }}>
+              {targetXP.toLocaleString()}
+            </div>
+          </div>
+
+          <button className="btn-primary" onClick={generateEncounter} disabled={loading} style={{ width: '100%' }}>
+            {loading ? <><Loader2 size={14} className="spin" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }}/> Conjuring...</> : <><Sparkles size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }}/> Forge Encounter</>}
+          </button>
+        </div>
+
+        <div>
+          {error && (
+            <div style={{
+              background: palette.blood + '33', border: `1px solid ${palette.blood}`,
+              padding: '12px 16px', color: palette.bloodBright, marginBottom: '16px',
+            }}>
+              {error}
+            </div>
+          )}
+
+          {!aiResult && !loading && (
+            <div className="panel" style={{ textAlign: 'center', padding: '60px 24px', color: palette.textMuted }}>
+              <Skull size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
+              <div style={{ fontFamily: 'IM Fell English SC, serif', fontSize: '14px', letterSpacing: '0.1em' }}>
+                Configure thy parameters and forge an encounter
+              </div>
+            </div>
+          )}
+
+          {loading && (
+            <div className="panel" style={{ textAlign: 'center', padding: '60px 24px' }}>
+              <Loader2 size={36} className="spin" style={{ color: palette.gold, marginBottom: '16px' }} />
+              <div style={{ fontFamily: 'IM Fell English SC, serif', color: palette.gold }}>
+                The arcane forces stir...
+              </div>
+            </div>
+          )}
+
+          {aiResult && (
+            <div className="panel">
+              <div className="display-font gold-glow-text" style={{
+                fontSize: '20px', color: palette.goldBright, fontWeight: 600, marginBottom: '4px',
+              }}>
+                The Encounter
+              </div>
+              <div style={{
+                fontFamily: 'Crimson Text, serif', fontStyle: 'italic',
+                color: palette.text, marginBottom: '16px', fontSize: '15px',
+              }}>
+                "{aiResult.concept}"
+              </div>
+
+              <div className="ornament-divider" />
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                {aiResult.resolved.map((r, i) => {
+                  const [ac, hp] = r.monster.ac_hp.split('/');
+                  return (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: '10px 14px',
+                      background: palette.bgPanel2, border: `1px solid ${palette.border}`,
+                    }}>
+                      <span style={{ fontSize: '20px' }}>{typeIcon(r.monster.type)}</span>
+                      <div style={{ flex: 1 }}>
+                        <a
+                          href={r.monster.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="display-font"
+                          style={{
+                            color: palette.goldBright, fontSize: '14px',
+                            textDecoration: 'none',
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            transition: 'color 0.2s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                          onMouseLeave={e => e.currentTarget.style.color = palette.goldBright}
+                          title="Open full statblock"
+                        >
+                          {r.quantity}× {r.monster.name}
+                          <ExternalLink size={11} style={{ opacity: 0.5 }} />
+                        </a>
+                        <div style={{ fontSize: '11px', color: palette.textDim, fontFamily: 'IM Fell English SC, serif' }}>
+                          CR {r.monster.cr} · AC {ac} · HP {hp}
+                        </div>
+                      </div>
+                      <div style={{ fontFamily: 'Cinzel, serif', fontSize: '13px', color: palette.gold, textAlign: 'right' }}>
+                        {(crToXP(r.monster.cr) * r.quantity).toLocaleString()} XP
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{
+                background: palette.bg, border: `1px solid ${palette.border}`,
+                padding: '12px 16px', marginBottom: '16px',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}>
+                <span style={{ fontFamily: 'IM Fell English SC, serif', color: palette.textDim, fontSize: '12px', letterSpacing: '0.1em' }}>
+                  TOTAL XP
+                </span>
+                <span className="display-font" style={{ fontSize: '20px', color: palette.goldBright, fontWeight: 700 }}>
+                  {aiResult.totalXP.toLocaleString()} <span style={{ fontSize: '12px', color: palette.textDim }}>/ {targetXP.toLocaleString()}</span>
+                </span>
+              </div>
+
+              <div style={{
+                background: palette.bgPanel2, border: `1px solid ${palette.border}`,
+                padding: '14px 16px', marginBottom: '16px',
+              }}>
+                <div style={{
+                  fontFamily: 'IM Fell English SC, serif', color: palette.gold,
+                  fontSize: '11px', letterSpacing: '0.2em', marginBottom: '8px',
+                }}>
+                  ◆ TACTICS ◆
+                </div>
+                <div style={{ fontSize: '14px', lineHeight: 1.7, color: palette.text }}>
+                  {aiResult.tactics}
+                </div>
+              </div>
+
+              <button className="btn-primary" onClick={addAllToTracker} style={{ width: '100%' }}>
+                <Swords size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }}/>
+                Send to Battle Tracker
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// TAB 3: NARRATIVE GENERATOR
+// =============================================================================
+function NarrativeTab({ apiKey }) {
+  const [selectedMonster, setSelectedMonster] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [context, setContext] = useState('');
+  const [tone, setTone] = useState('Eerie');
+  const [loading, setLoading] = useState(false);
+  const [narrative, setNarrative] = useState('');
+  const [error, setError] = useState('');
+
+  const TONES = ['Eerie','Heroic','Comedic','Tragic','Brutal','Mysterious','Whimsical'];
+
+  const filtered = useMemo(() => {
+    if (!searchTerm) return [];
+    return MONSTERS.filter(m =>
+      m.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ).slice(0, 6);
+  }, [searchTerm]);
+
+  const generateNarrative = async () => {
+    if (!selectedMonster) return;
+    setLoading(true);
+    setError('');
+    setNarrative('');
+
+    const [ac, hp] = selectedMonster.ac_hp.split('/');
+    const prompt = `You are a master Dungeon Master writing a vivid encounter description for D&D 2024.
+
+MONSTER: ${selectedMonster.name}
+- Type: ${selectedMonster.type}
+- Size: ${selectedMonster.size}
+- CR: ${selectedMonster.cr}
+- AC: ${ac}, HP: ${hp}
+
+TONE: ${tone}
+${context ? `CONTEXT/SCENE: ${context}` : 'CONTEXT: A wilderness encounter the party stumbles upon'}
+
+Write a richly atmospheric encounter description with these sections (use markdown bold like **Section Name** for headers):
+
+**The Approach** — A vivid 3-4 sentence description of how the players first perceive this creature (sights, sounds, smells, mood). Make it cinematic and sensory.
+
+**Battle Tactics** — 3-4 sentences on how this creature fights intelligently. Reference its actual abilities, environment use, target priority. Be tactical and specific.
+
+**Roleplay Hook** — 2-3 sentences with a unique twist, motivation, or surprising element that makes THIS encounter memorable rather than generic. Could be dialogue, a strange behavior, a connection to a larger plot, etc.
+
+Use evocative language, sensory details, and write in a tone that matches "${tone}". Do NOT include the monster's stat block — focus on flavor and play.`;
+
+    try {
+      const text = await callAI(apiKey, prompt);
+      setNarrative(text);
+    } catch (e) {
+      setError(`Failed to generate narrative: ${e.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderNarrative = (text) => {
+    return text.split(/\n\n+/).map((para, i) => {
+      const html = para.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                       .replace(/\*(.+?)\*/g, '<em>$1</em>');
+      return <p key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+    });
+  };
+
+  return (
+    <div>
+      <div className="ornament-divider">
+        <span style={{ fontFamily: 'Cinzel, serif', fontSize: '14px', letterSpacing: '0.3em', color: palette.gold }}>
+          THE LOREKEEPER
+        </span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 360px) 1fr', gap: '24px' }}>
+        <div className="panel">
+          <Label>Choose a Creature</Label>
+          <input
+            placeholder="Search bestiary..."
+            value={searchTerm}
+            onChange={e => { setSearchTerm(e.target.value); setSelectedMonster(null); }}
+          />
+          {filtered.length > 0 && !selectedMonster && (
+            <div style={{ marginTop: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+              {filtered.map(m => (
+                <div key={m.name}
+                  onClick={() => { setSelectedMonster(m); setSearchTerm(m.name); }}
+                  style={{
+                    padding: '8px 12px', cursor: 'pointer',
+                    borderBottom: `1px solid ${palette.border}`, fontSize: '14px',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = palette.bgPanel2}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <span style={{ marginRight: '8px' }}>{typeIcon(m.type)}</span>
+                  <span style={{ color: palette.goldBright }}>{m.name}</span>
+                  <span style={{ color: palette.textDim, fontSize: '11px', marginLeft: '8px' }}>CR {m.cr}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {selectedMonster && (
+            <div style={{
+              marginTop: '12px', padding: '10px 12px',
+              background: palette.bgPanel2, border: `1px solid ${palette.gold}`, fontSize: '13px',
+            }}>
+              <div className="display-font" style={{ color: palette.goldBright }}>{selectedMonster.name}</div>
+              <div style={{ color: palette.textDim, fontSize: '11px', fontFamily: 'IM Fell English SC, serif' }}>
+                CR {selectedMonster.cr} · {selectedMonster.size} {selectedMonster.type}
+              </div>
+            </div>
+          )}
+
+          <div style={{ marginTop: '16px' }}>
+            <Label>Tone</Label>
+            <select value={tone} onChange={e => setTone(e.target.value)}>
+              {TONES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
+          <div style={{ marginTop: '14px' }}>
+            <Label>Scene / Context (optional)</Label>
+            <textarea
+              rows="4"
+              placeholder="e.g., 'The party finds it guarding a sealed crypt' or 'It has been hunting villagers for weeks'..."
+              value={context}
+              onChange={e => setContext(e.target.value)}
+            />
+          </div>
+
+          <button className="btn-primary" onClick={generateNarrative}
+            disabled={loading || !selectedMonster}
+            style={{ width: '100%', marginTop: '20px' }}
+          >
+            {loading ? <><Loader2 size={14} className="spin" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }}/> Scribing...</> : <><Scroll size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }}/> Inscribe Lore</>}
+          </button>
+        </div>
+
+        <div>
+          {error && (
+            <div style={{
+              background: palette.blood + '33', border: `1px solid ${palette.blood}`,
+              padding: '12px 16px', color: palette.bloodBright, marginBottom: '16px',
+            }}>
+              {error}
+            </div>
+          )}
+
+          {!narrative && !loading && (
+            <div className="panel" style={{ textAlign: 'center', padding: '60px 24px', color: palette.textMuted }}>
+              <Scroll size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
+              <div style={{ fontFamily: 'IM Fell English SC, serif', fontSize: '14px', letterSpacing: '0.1em' }}>
+                Choose a creature, and I shall craft its tale
+              </div>
+            </div>
+          )}
+
+          {loading && (
+            <div className="panel" style={{ textAlign: 'center', padding: '60px 24px' }}>
+              <Loader2 size={36} className="spin" style={{ color: palette.gold, marginBottom: '16px' }} />
+              <div style={{ fontFamily: 'IM Fell English SC, serif', color: palette.gold }}>
+                Quill scratches against parchment...
+              </div>
+            </div>
+          )}
+
+          {narrative && (
+            <div className="panel">
+              <div style={{
+                fontFamily: 'IM Fell English SC, serif',
+                fontSize: '11px', letterSpacing: '0.25em',
+                color: palette.gold, textAlign: 'center', marginBottom: '8px',
+              }}>
+                ✦ FROM THE LOREKEEPER'S TOME ✦
+              </div>
+              <h3 className="display-font gold-glow-text" style={{
+                textAlign: 'center', color: palette.goldBright,
+                fontSize: '22px', margin: '0 0 4px',
+              }}>
+                {selectedMonster?.name}
+              </h3>
+              <div style={{
+                textAlign: 'center', color: palette.textDim,
+                fontStyle: 'italic', fontSize: '13px', marginBottom: '20px',
+              }}>
+                — a {tone.toLowerCase()} encounter —
+              </div>
+              <div className="ornament-divider" />
+              <div className="narrative-text">
+                {renderNarrative(narrative)}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// TAB 4: BATTLE TRACKER
+// =============================================================================
+function TrackerTab({ encounter }) {
+  const [combatants, setCombatants] = useState([]);
+  const [round, setRound] = useState(1);
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  // PC form
+  const [newName, setNewName] = useState('');
+  const [newInit, setNewInit] = useState('');
+  const [newHP, setNewHP] = useState('');
+  const [newAC, setNewAC] = useState('');
+
+  // Enemy form
+  const [enemyName, setEnemyName] = useState('');
+  const [enemyInit, setEnemyInit] = useState('');
+  const [enemyHP, setEnemyHP] = useState('');
+  const [enemyAC, setEnemyAC] = useState('');
+
+  // Bestiary picker
+  const [bestiarySearch, setBestiarySearch] = useState('');
+  const [bestiaryQty, setBestiaryQty] = useState(1);
+
+  const bestiaryResults = useMemo(() => {
+    if (!bestiarySearch || bestiarySearch.length < 2) return [];
+    return MONSTERS.filter(m =>
+      m.name.toLowerCase().includes(bestiarySearch.toLowerCase())
+    ).slice(0, 6);
+  }, [bestiarySearch]);
+
+  useEffect(() => {
+    if (encounter.length > 0) {
+      const newCombatants = encounter.map((m, i) => {
+        const [ac, hp] = m.ac_hp.split('/');
+        return {
+          id: m._id || (Date.now() + i),
+          name: m.name, isPC: false,
+          init: Math.floor(Math.random() * 20) + 1,
+          hp: Number(hp), maxHp: Number(hp), ac: Number(ac),
+          conditions: [],
+          monsterUrl: m.url,
+        };
+      });
+      setCombatants(prev => {
+        const existingIds = new Set(prev.map(c => c.id));
+        return [...prev, ...newCombatants.filter(c => !existingIds.has(c.id))]
+          .sort((a, b) => b.init - a.init);
+      });
+    }
+  }, [encounter.length]);
+
+  const addPC = () => {
+    if (!newName.trim()) return;
+    const c = {
+      id: Date.now(),
+      name: newName, isPC: true,
+      init: Number(newInit) || 0,
+      hp: Number(newHP) || 0, maxHp: Number(newHP) || 0,
+      ac: Number(newAC) || 10, conditions: [],
+    };
+    setCombatants(prev => [...prev, c].sort((a, b) => b.init - a.init));
+    setNewName(''); setNewInit(''); setNewHP(''); setNewAC('');
+  };
+
+  const addEnemy = () => {
+    if (!enemyName.trim()) return;
+    const c = {
+      id: Date.now(),
+      name: enemyName, isPC: false,
+      init: Number(enemyInit) || (Math.floor(Math.random() * 20) + 1),
+      hp: Number(enemyHP) || 1, maxHp: Number(enemyHP) || 1,
+      ac: Number(enemyAC) || 10, conditions: [],
+    };
+    setCombatants(prev => [...prev, c].sort((a, b) => b.init - a.init));
+    setEnemyName(''); setEnemyInit(''); setEnemyHP(''); setEnemyAC('');
+  };
+
+  const addFromBestiary = (monster) => {
+    const [ac, hp] = monster.ac_hp.split('/');
+    const qty = Math.max(1, Number(bestiaryQty) || 1);
+    const newOnes = [];
+    for (let i = 0; i < qty; i++) {
+      newOnes.push({
+        id: Date.now() + Math.random() + i,
+        name: qty > 1 ? `${monster.name} ${i + 1}` : monster.name,
+        isPC: false,
+        init: Math.floor(Math.random() * 20) + 1,
+        hp: Number(hp), maxHp: Number(hp), ac: Number(ac),
+        conditions: [],
+        monsterUrl: monster.url,
+      });
+    }
+    setCombatants(prev => [...prev, ...newOnes].sort((a, b) => b.init - a.init));
+    setBestiarySearch('');
+    setBestiaryQty(1);
+  };
+
+  const updateHP = (id, delta) => {
+    setCombatants(prev => prev.map(c => c.id === id ? { ...c, hp: Math.max(0, Math.min(c.maxHp, c.hp + delta)) } : c));
+  };
+
+  const setHPDirect = (id, value) => {
+    setCombatants(prev => prev.map(c => c.id === id ? { ...c, hp: Math.max(0, Math.min(c.maxHp, Number(value) || 0)) } : c));
+  };
+
+  const removeCombatant = (id) => {
+    setCombatants(prev => prev.filter(c => c.id !== id));
+  };
+
+  const nextTurn = () => {
+    if (combatants.length === 0) return;
+    let nextIdx = (activeIdx + 1) % combatants.length;
+    if (nextIdx === 0) setRound(r => r + 1);
+    setActiveIdx(nextIdx);
+  };
+
+  const resetCombat = () => {
+    setCombatants([]); setRound(1); setActiveIdx(0);
+  };
+
+  const sortedCombatants = combatants;
+
+  return (
+    <div>
+      <div className="ornament-divider">
+        <span style={{ fontFamily: 'Cinzel, serif', fontSize: '14px', letterSpacing: '0.3em', color: palette.gold }}>
+          BATTLE TRACKER
+        </span>
+      </div>
+
+      <div className="panel" style={{
+        marginBottom: '20px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: '12px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <div>
+            <div style={{
+              fontSize: '10px', color: palette.textMuted,
+              fontFamily: 'IM Fell English SC, serif', letterSpacing: '0.2em',
+            }}>
+              ROUND
+            </div>
+            <div className="display-font gold-glow-text" style={{
+              fontSize: '32px', fontWeight: 700, color: palette.goldBright, lineHeight: 1,
+            }}>
+              {round}
+            </div>
+          </div>
+          {sortedCombatants[activeIdx] && (
+            <div>
+              <div style={{
+                fontSize: '10px', color: palette.textMuted,
+                fontFamily: 'IM Fell English SC, serif', letterSpacing: '0.2em',
+              }}>
+                CURRENT TURN
+              </div>
+              <div className="display-font" style={{
+                fontSize: '20px', color: palette.bloodBright, lineHeight: 1.1,
+              }}>
+                {sortedCombatants[activeIdx].name}
+              </div>
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="btn-primary" onClick={nextTurn} disabled={combatants.length === 0}>
+            Next Turn →
+          </button>
+          <button className="btn-secondary" onClick={resetCombat}>
+            <Trash2 size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /> Clear
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+        {/* ADD PC */}
+        <div className="panel">
+          <div style={{
+            fontFamily: 'IM Fell English SC, serif', color: palette.gold,
+            fontSize: '11px', letterSpacing: '0.2em', marginBottom: '10px',
+          }}>
+            ◆ ADD PLAYER CHARACTER ◆
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: '8px', alignItems: 'end' }}>
+            <input placeholder="Name" value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addPC()} />
+            <input placeholder="Init" type="number" value={newInit} onChange={e => setNewInit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addPC()} />
+            <input placeholder="HP" type="number" value={newHP} onChange={e => setNewHP(e.target.value)} onKeyDown={e => e.key === 'Enter' && addPC()} />
+            <input placeholder="AC" type="number" value={newAC} onChange={e => setNewAC(e.target.value)} onKeyDown={e => e.key === 'Enter' && addPC()} />
+            <button className="btn-primary" onClick={addPC} title="Add player character">
+              <Plus size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* ADD CUSTOM ENEMY */}
+        <div className="panel">
+          <div style={{
+            fontFamily: 'IM Fell English SC, serif', color: palette.bloodBright,
+            fontSize: '11px', letterSpacing: '0.2em', marginBottom: '10px',
+          }}>
+            ◆ ADD CUSTOM ENEMY ◆
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: '8px', alignItems: 'end' }}>
+            <input placeholder="Name" value={enemyName} onChange={e => setEnemyName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addEnemy()} />
+            <input placeholder="Init" type="number" value={enemyInit} onChange={e => setEnemyInit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addEnemy()} />
+            <input placeholder="HP" type="number" value={enemyHP} onChange={e => setEnemyHP(e.target.value)} onKeyDown={e => e.key === 'Enter' && addEnemy()} />
+            <input placeholder="AC" type="number" value={enemyAC} onChange={e => setEnemyAC(e.target.value)} onKeyDown={e => e.key === 'Enter' && addEnemy()} />
+            <button className="btn-primary" onClick={addEnemy} title="Add custom enemy">
+              <Plus size={14} />
+            </button>
+          </div>
+          <div style={{ fontSize: '10px', color: palette.textDim, marginTop: '6px', fontFamily: 'IM Fell English SC, serif' }}>
+            Init field random if empty
+          </div>
+        </div>
+      </div>
+
+      {/* ADD FROM BESTIARY */}
+      <div className="panel" style={{ marginBottom: '20px' }}>
+        <div style={{
+          fontFamily: 'IM Fell English SC, serif', color: palette.bloodBright,
+          fontSize: '11px', letterSpacing: '0.2em', marginBottom: '10px',
+        }}>
+          ◆ SUMMON FROM THE BESTIARY ◆
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: '8px', alignItems: 'start' }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={14} style={{
+              position: 'absolute', left: '12px', top: '14px',
+              color: palette.textMuted,
+            }} />
+            <input
+              placeholder="Search any of the 513 monsters..."
+              value={bestiarySearch}
+              onChange={e => setBestiarySearch(e.target.value)}
+              style={{ paddingLeft: '34px' }}
+            />
+            {bestiaryResults.length > 0 && (
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, right: 0,
+                background: palette.bgPanel, border: `1px solid ${palette.gold}`,
+                marginTop: '4px', zIndex: 10, maxHeight: '240px', overflowY: 'auto',
+              }}>
+                {bestiaryResults.map(m => {
+                  const [ac, hp] = m.ac_hp.split('/');
+                  return (
+                    <div key={m.name}
+                      onClick={() => addFromBestiary(m)}
+                      style={{
+                        padding: '10px 14px', cursor: 'pointer',
+                        borderBottom: `1px solid ${palette.border}`,
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = palette.bgPanel2}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span style={{ fontSize: '18px' }}>{typeIcon(m.type)}</span>
+                      <div style={{ flex: 1 }}>
+                        <div className="display-font" style={{ color: palette.goldBright, fontSize: '14px' }}>
+                          {m.name}
+                        </div>
+                        <div style={{ fontSize: '10px', color: palette.textDim, fontFamily: 'IM Fell English SC, serif' }}>
+                          CR {m.cr} · AC {ac} · HP {hp} · {m.size} {m.type}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '11px', color: palette.bloodBright, fontFamily: 'Cinzel, serif', fontWeight: 700 }}>
+                        + ADD
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <input
+            type="number" min="1" max="20"
+            placeholder="Qty"
+            value={bestiaryQty}
+            onChange={e => setBestiaryQty(e.target.value)}
+            title="Quantity"
+          />
+        </div>
+        <div style={{ fontSize: '10px', color: palette.textDim, marginTop: '6px', fontFamily: 'IM Fell English SC, serif' }}>
+          Click a monster from the list to add it. HP, AC and stat link auto-filled. Set quantity for multiple copies.
+        </div>
+      </div>
+
+      {sortedCombatants.length === 0 ? (
+        <div className="panel" style={{ textAlign: 'center', padding: '60px 24px', color: palette.textMuted }}>
+          <Skull size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
+          <div style={{ fontFamily: 'IM Fell English SC, serif', fontSize: '14px', letterSpacing: '0.1em' }}>
+            No combatants yet. Add PCs above, or send monsters from the Encounter Forge.
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {sortedCombatants.map((c, idx) => (
+            <CombatantRow
+              key={c.id} combatant={c} isActive={idx === activeIdx}
+              onUpdateHP={updateHP} onSetHP={setHPDirect} onRemove={removeCombatant}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CombatantRow({ combatant, isActive, onUpdateHP, onSetHP, onRemove }) {
+  const c = combatant;
+  const hpPct = c.maxHp > 0 ? (c.hp / c.maxHp) * 100 : 0;
+  const hpColor = hpPct > 50 ? '#4a7a4a' : hpPct > 25 ? '#c9a04a' : palette.bloodBright;
+  const isDead = c.hp <= 0;
+
+  return (
+    <div style={{
+      background: isActive ? palette.bgPanel : palette.bgPanel2,
+      border: `1px solid ${isActive ? palette.gold : palette.border}`,
+      padding: '12px 16px',
+      display: 'grid',
+      gridTemplateColumns: '50px 1fr 100px 200px 60px 30px',
+      gap: '12px', alignItems: 'center',
+      opacity: isDead ? 0.4 : 1,
+      boxShadow: isActive ? `0 0 16px ${palette.gold}33` : 'none',
+      position: 'relative',
+    }}>
+      {isActive && (
+        <div style={{
+          position: 'absolute', left: '-8px', top: '50%',
+          transform: 'translateY(-50%)', color: palette.bloodBright, fontSize: '20px',
+        }}>
+          ▸
+        </div>
+      )}
+
+      <div style={{
+        background: c.isPC ? palette.bg : palette.blood,
+        border: `1px solid ${c.isPC ? palette.gold : palette.bloodBright}`,
+        textAlign: 'center', padding: '6px',
+        fontFamily: 'Cinzel, serif', fontWeight: 700,
+        color: c.isPC ? palette.goldBright : palette.parchment, fontSize: '18px',
+      }}>
+        {c.init}
+      </div>
+
+      <div style={{ minWidth: 0 }}>
+        {c.monsterUrl ? (
+          <a
+            href={c.monsterUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="display-font"
+            style={{
+              fontSize: '15px',
+              color: c.isPC ? palette.goldBright : palette.text,
+              textDecoration: isDead ? 'line-through' : 'none',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = palette.goldBright}
+            onMouseLeave={e => e.currentTarget.style.color = c.isPC ? palette.goldBright : palette.text}
+            title="Open statblock"
+          >
+            {c.name}
+            <ExternalLink size={10} style={{ opacity: 0.5, flexShrink: 0 }} />
+          </a>
+        ) : (
+          <div className="display-font" style={{
+            fontSize: '15px', color: c.isPC ? palette.goldBright : palette.text,
+            textDecoration: isDead ? 'line-through' : 'none',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {c.name}
+          </div>
+        )}
+        <div style={{
+          fontSize: '10px', color: palette.textDim,
+          fontFamily: 'IM Fell English SC, serif', letterSpacing: '0.1em',
+        }}>
+          {c.isPC ? 'PLAYER CHARACTER' : 'MONSTER'} · AC {c.ac}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <button onClick={() => onUpdateHP(c.id, -1)} style={{
+          background: palette.blood, color: palette.parchment, border: 'none',
+          width: '24px', height: '24px', cursor: 'pointer', fontWeight: 700,
+        }}>−</button>
+        <input
+          type="number" value={c.hp}
+          onChange={e => onSetHP(c.id, e.target.value)}
+          style={{
+            width: '50px', padding: '4px', textAlign: 'center', fontSize: '14px',
+            fontFamily: 'Cinzel, serif', fontWeight: 700,
+          }}
+        />
+        <button onClick={() => onUpdateHP(c.id, 1)} style={{
+          background: '#4a7a4a', color: palette.parchment, border: 'none',
+          width: '24px', height: '24px', cursor: 'pointer', fontWeight: 700,
+        }}>+</button>
+      </div>
+
+      <div>
+        <div style={{
+          height: '14px', background: palette.bg,
+          border: `1px solid ${palette.border}`, position: 'relative', overflow: 'hidden',
+        }}>
+          <div style={{
+            position: 'absolute', left: 0, top: 0, bottom: 0,
+            width: `${hpPct}%`, background: hpColor,
+            transition: 'width 0.3s, background 0.3s',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '10px', color: palette.parchment,
+            fontFamily: 'Cinzel, serif', fontWeight: 700,
+            textShadow: '0 0 3px rgba(0,0,0,0.8)',
+          }}>
+            {c.hp} / {c.maxHp}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '2px' }}>
+        {[5, 10].map(dmg => (
+          <button key={dmg} onClick={() => onUpdateHP(c.id, -dmg)}
+            style={{
+              background: palette.blood + '88', color: palette.parchment,
+              border: `1px solid ${palette.bloodBright}`,
+              padding: '2px 6px', fontSize: '10px', cursor: 'pointer',
+              fontFamily: 'Cinzel, serif', fontWeight: 700,
+            }}
+            title={`Deal ${dmg} damage`}
+          >
+            -{dmg}
+          </button>
+        ))}
+      </div>
+
+      <button onClick={() => onRemove(c.id)}
+        style={{
+          background: 'transparent', border: 'none', color: palette.textMuted,
+          cursor: 'pointer', padding: '4px',
+        }}
+        title="Remove"
+      >
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
+
+// =============================================================================
+// BUILDING ICON (custom SVG, since lucide-react may not have a generic one)
+// =============================================================================
+const BuildingIcon = ({ size = 24, ...props }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size} height={size}
+    viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round"
+    {...props}
+  >
+    <rect x="4" y="2" width="16" height="20" rx="0"/>
+    <line x1="8" y1="6" x2="10" y2="6"/>
+    <line x1="14" y1="6" x2="16" y2="6"/>
+    <line x1="8" y1="10" x2="10" y2="10"/>
+    <line x1="14" y1="10" x2="16" y2="10"/>
+    <line x1="8" y1="14" x2="10" y2="14"/>
+    <line x1="14" y1="14" x2="16" y2="14"/>
+    <path d="M10 22V18h4v4"/>
+  </svg>
+);
+
+// =============================================================================
+// TAB 5: BUILDING FORGE (embedded interior generator)
+// =============================================================================
+// The building generator is a self-contained HTML app. We embed it via base64
+// data URL into an iframe — no external hosting required, works offline.
+const BUILDING_HTML_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9Imh1Ij4KPGhlYWQ+CjxtZXRhIGNoYXJzZXQ9IlVURi04Ij4KPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgaW5pdGlhbC1zY2FsZT0xLjAiPgo8dGl0bGU+RCZEIMOJcMO8bGV0IEdlbmVyw6F0b3I8L3RpdGxlPgo8bGluayBocmVmPSJodHRwczovL2ZvbnRzLmdvb2dsZWFwaXMuY29tL2NzczI/ZmFtaWx5PUNpbnplbDp3Z2h0QDQwMDs2MDA7ODAwJmZhbWlseT1JTStGZWxsK0VuZ2xpc2g6aXRhbEAwOzEmZmFtaWx5PU1lZGlldmFsU2hhcnAmZGlzcGxheT1zd2FwIiByZWw9InN0eWxlc2hlZXQiPgo8c3R5bGU+CiAgKiB7IG1hcmdpbjogMDsgcGFkZGluZzogMDsgYm94LXNpemluZzogYm9yZGVyLWJveDsgfQoKICA6cm9vdCB7CiAgICAtLXBhcmNobWVudDogI2Y0ZTRiYzsKICAgIC0tcGFyY2htZW50LWRhcms6ICNkNGI4OTY7CiAgICAtLWluazogIzNhMjgxNzsKICAgIC0taW5rLXJlZDogIzhiMjUwODsKICAgIC0taW5rLWdvbGQ6ICNhNjdjMDA7CiAgfQoKICBib2R5IHsKICAgIGZvbnQtZmFtaWx5OiAnSU0gRmVsbCBFbmdsaXNoJywgc2VyaWY7CiAgICBiYWNrZ3JvdW5kOiByYWRpYWwtZ3JhZGllbnQoZWxsaXBzZSBhdCB0b3AsICM2YjRhMmIgMCUsICMzYTI4MTcgNjAlLCAjMWEwZjA4IDEwMCUpOwogICAgbWluLWhlaWdodDogMTAwdmg7CiAgICBjb2xvcjogdmFyKC0taW5rKTsKICAgIHBhZGRpbmc6IDIwcHg7CiAgfQoKICAuY29udGFpbmVyIHsgbWF4LXdpZHRoOiAxNDAwcHg7IG1hcmdpbjogMCBhdXRvOyB9CgogIGhlYWRlciB7IHRleHQtYWxpZ246IGNlbnRlcjsgcGFkZGluZzogMzBweCAyMHB4OyBtYXJnaW4tYm90dG9tOiAzMHB4OyB9CgogIGgxIHsKICAgIGZvbnQtZmFtaWx5OiAnQ2luemVsJywgc2VyaWY7CiAgICBmb250LXdlaWdodDogODAwOwogICAgZm9udC1zaXplOiBjbGFtcCgycmVtLCA1dncsIDMuNXJlbSk7CiAgICBjb2xvcjogdmFyKC0tcGFyY2htZW50KTsKICAgIHRleHQtc2hhZG93OiAzcHggM3B4IDAgdmFyKC0taW5rLXJlZCksIDZweCA2cHggMTBweCByZ2JhKDAsMCwwLDAuNik7CiAgICBsZXR0ZXItc3BhY2luZzogMC4xNWVtOwogICAgdGV4dC10cmFuc2Zvcm06IHVwcGVyY2FzZTsKICB9CgogIC5zdWJ0aXRsZSB7CiAgICBmb250LWZhbWlseTogJ01lZGlldmFsU2hhcnAnLCBjdXJzaXZlOwogICAgY29sb3I6IHZhcigtLXBhcmNobWVudC1kYXJrKTsKICAgIGZvbnQtc2l6ZTogMS4ycmVtOwogICAgbWFyZ2luLXRvcDogMTBweDsKICAgIGZvbnQtc3R5bGU6IGl0YWxpYzsKICB9CgogIC5jb250cm9scyB7CiAgICBiYWNrZ3JvdW5kOiBsaW5lYXItZ3JhZGllbnQoMTM1ZGVnLCB2YXIoLS1wYXJjaG1lbnQpIDAlLCB2YXIoLS1wYXJjaG1lbnQtZGFyaykgMTAwJSk7CiAgICBib3JkZXI6IDNweCBkb3VibGUgdmFyKC0taW5rKTsKICAgIGJvcmRlci1yYWRpdXM6IDhweDsKICAgIHBhZGRpbmc6IDI1cHg7CiAgICBtYXJnaW4tYm90dG9tOiAzMHB4OwogICAgYm94LXNoYWRvdzogMCAxMHB4IDMwcHggcmdiYSgwLDAsMCwwLjUpLCBpbnNldCAwIDAgNjBweCByZ2JhKDEzOSwgNjksIDE5LCAwLjE1KTsKICAgIHBvc2l0aW9uOiByZWxhdGl2ZTsKICB9CgogIC5jb250cm9sczo6YmVmb3JlIHsKICAgIGNvbnRlbnQ6ICIiOwogICAgcG9zaXRpb246IGFic29sdXRlOwogICAgdG9wOiA4cHg7IGxlZnQ6IDhweDsgcmlnaHQ6IDhweDsgYm90dG9tOiA4cHg7CiAgICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1pbmspOwogICAgcG9pbnRlci1ldmVudHM6IG5vbmU7CiAgICBib3JkZXItcmFkaXVzOiA0cHg7CiAgfQoKICAuY29udHJvbHMtZ3JpZCB7CiAgICBkaXNwbGF5OiBncmlkOwogICAgZ3JpZC10ZW1wbGF0ZS1jb2x1bW5zOiByZXBlYXQoYXV0by1maXQsIG1pbm1heCgxODBweCwgMWZyKSk7CiAgICBnYXA6IDIwcHg7CiAgICBtYXJnaW4tYm90dG9tOiAyMHB4OwogIH0KCiAgLmNvbnRyb2wtZ3JvdXAgbGFiZWwgewogICAgZGlzcGxheTogYmxvY2s7CiAgICBmb250LWZhbWlseTogJ0NpbnplbCcsIHNlcmlmOwogICAgZm9udC13ZWlnaHQ6IDYwMDsKICAgIGZvbnQtc2l6ZTogMC44NXJlbTsKICAgIHRleHQtdHJhbnNmb3JtOiB1cHBlcmNhc2U7CiAgICBsZXR0ZXItc3BhY2luZzogMC4xZW07CiAgICBtYXJnaW4tYm90dG9tOiA4cHg7CiAgICBjb2xvcjogdmFyKC0taW5rLXJlZCk7CiAgfQoKICAuY29udHJvbC1ncm91cCBzZWxlY3QgewogICAgd2lkdGg6IDEwMCU7CiAgICBwYWRkaW5nOiAxMHB4OwogICAgYmFja2dyb3VuZDogcmdiYSgyNTUsIDI0OCwgMjIwLCAwLjYpOwogICAgYm9yZGVyOiAycHggc29saWQgdmFyKC0taW5rKTsKICAgIGJvcmRlci1yYWRpdXM6IDRweDsKICAgIGZvbnQtZmFtaWx5OiAnSU0gRmVsbCBFbmdsaXNoJywgc2VyaWY7CiAgICBmb250LXNpemU6IDFyZW07CiAgICBjb2xvcjogdmFyKC0taW5rKTsKICAgIGN1cnNvcjogcG9pbnRlcjsKICB9CgogIC5idXR0b24tcm93IHsKICAgIGRpc3BsYXk6IGZsZXg7CiAgICBnYXA6IDE1cHg7CiAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICAgIGZsZXgtd3JhcDogd3JhcDsKICB9CgogIGJ1dHRvbiB7CiAgICBmb250LWZhbWlseTogJ0NpbnplbCcsIHNlcmlmOwogICAgZm9udC13ZWlnaHQ6IDYwMDsKICAgIHRleHQtdHJhbnNmb3JtOiB1cHBlcmNhc2U7CiAgICBsZXR0ZXItc3BhY2luZzogMC4xNWVtOwogICAgcGFkZGluZzogMTRweCAzMnB4OwogICAgZm9udC1zaXplOiAxcmVtOwogICAgYmFja2dyb3VuZDogbGluZWFyLWdyYWRpZW50KDE4MGRlZywgdmFyKC0taW5rLXJlZCkgMCUsICM1YTE4MDUgMTAwJSk7CiAgICBjb2xvcjogdmFyKC0tcGFyY2htZW50KTsKICAgIGJvcmRlcjogMnB4IHNvbGlkIHZhcigtLWluayk7CiAgICBib3JkZXItcmFkaXVzOiA0cHg7CiAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICBib3gtc2hhZG93OiAwIDRweCAxMHB4IHJnYmEoMCwwLDAsMC40KSwgaW5zZXQgMCAxcHggMCByZ2JhKDI1NSwyNTUsMjU1LDAuMik7CiAgICB0cmFuc2l0aW9uOiB0cmFuc2Zvcm0gMC4yczsKICB9CgogIGJ1dHRvbjpob3ZlciB7IHRyYW5zZm9ybTogdHJhbnNsYXRlWSgtMnB4KTsgfQogIGJ1dHRvbi5zZWNvbmRhcnkgeyBiYWNrZ3JvdW5kOiBsaW5lYXItZ3JhZGllbnQoMTgwZGVnLCAjNmI0YTJiIDAlLCAjM2EyODE3IDEwMCUpOyB9CgogIC5tYWluLWNvbnRlbnQgewogICAgZGlzcGxheTogZ3JpZDsKICAgIGdyaWQtdGVtcGxhdGUtY29sdW1uczogMWZyIDQwMHB4OwogICAgZ2FwOiAyNXB4OwogIH0KCiAgQG1lZGlhIChtYXgtd2lkdGg6IDkwMHB4KSB7CiAgICAubWFpbi1jb250ZW50IHsgZ3JpZC10ZW1wbGF0ZS1jb2x1bW5zOiAxZnI7IH0KICB9CgogIC5tYXAtY29udGFpbmVyLCAuZGV0YWlscy1jb250YWluZXIgewogICAgYmFja2dyb3VuZDogcmFkaWFsLWdyYWRpZW50KGVsbGlwc2UgYXQgY2VudGVyLCB2YXIoLS1wYXJjaG1lbnQpIDAlLCB2YXIoLS1wYXJjaG1lbnQtZGFyaykgMTAwJSk7CiAgICBib3JkZXI6IDNweCBkb3VibGUgdmFyKC0taW5rKTsKICAgIGJvcmRlci1yYWRpdXM6IDhweDsKICAgIHBhZGRpbmc6IDIwcHg7CiAgICBib3gtc2hhZG93OiAwIDEwcHggMzBweCByZ2JhKDAsMCwwLDAuNSk7CiAgfQoKICAubWFwLXRpdGxlIHsKICAgIGZvbnQtZmFtaWx5OiAnQ2luemVsJywgc2VyaWY7CiAgICBmb250LXdlaWdodDogODAwOwogICAgdGV4dC1hbGlnbjogY2VudGVyOwogICAgZm9udC1zaXplOiAxLjVyZW07CiAgICBtYXJnaW4tYm90dG9tOiAxNXB4OwogICAgY29sb3I6IHZhcigtLWluay1yZWQpOwogICAgdGV4dC10cmFuc2Zvcm06IHVwcGVyY2FzZTsKICAgIGxldHRlci1zcGFjaW5nOiAwLjFlbTsKICAgIGJvcmRlci1ib3R0b206IDFweCBzb2xpZCB2YXIoLS1pbmspOwogICAgcGFkZGluZy1ib3R0b206IDEwcHg7CiAgfQoKICAuZmxvb3ItdGFicyB7CiAgICBkaXNwbGF5OiBmbGV4OwogICAgZ2FwOiA2cHg7CiAgICBtYXJnaW4tYm90dG9tOiAxNXB4OwogICAgZmxleC13cmFwOiB3cmFwOwogICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgfQoKICAuZmxvb3ItdGFiIHsKICAgIHBhZGRpbmc6IDhweCAxOHB4OwogICAgYmFja2dyb3VuZDogcmdiYSg1OCwgNDAsIDIzLCAwLjE1KTsKICAgIGJvcmRlcjogMnB4IHNvbGlkIHZhcigtLWluayk7CiAgICBib3JkZXItcmFkaXVzOiA0cHg7CiAgICBmb250LWZhbWlseTogJ0NpbnplbCcsIHNlcmlmOwogICAgZm9udC13ZWlnaHQ6IDYwMDsKICAgIGZvbnQtc2l6ZTogMC45cmVtOwogICAgY3Vyc29yOiBwb2ludGVyOwogICAgdHJhbnNpdGlvbjogYWxsIDAuMnM7CiAgICBjb2xvcjogdmFyKC0taW5rKTsKICB9CgogIC5mbG9vci10YWI6aG92ZXIgeyBiYWNrZ3JvdW5kOiByZ2JhKDU4LCA0MCwgMjMsIDAuMyk7IH0KCiAgLmZsb29yLXRhYi5hY3RpdmUgewogICAgYmFja2dyb3VuZDogdmFyKC0taW5rLXJlZCk7CiAgICBjb2xvcjogdmFyKC0tcGFyY2htZW50KTsKICAgIGJveC1zaGFkb3c6IDAgM3B4IDhweCByZ2JhKDAsMCwwLDAuMyk7CiAgfQoKICAjbWFwQ2FudmFzIHsKICAgIHdpZHRoOiAxMDAlOwogICAgaGVpZ2h0OiBhdXRvOwogICAgZGlzcGxheTogYmxvY2s7CiAgICBiYWNrZ3JvdW5kOiAjZjRlNGJjOwogICAgYm9yZGVyOiAycHggc29saWQgdmFyKC0taW5rKTsKICAgIGJvcmRlci1yYWRpdXM6IDRweDsKICB9CgogIC5kZXRhaWxzLWNvbnRhaW5lciB7CiAgICBtYXgtaGVpZ2h0OiA3NTBweDsKICAgIG92ZXJmbG93LXk6IGF1dG87CiAgfQoKICAuZGV0YWlscy1jb250YWluZXI6Oi13ZWJraXQtc2Nyb2xsYmFyIHsgd2lkdGg6IDEwcHg7IH0KICAuZGV0YWlscy1jb250YWluZXI6Oi13ZWJraXQtc2Nyb2xsYmFyLXRyYWNrIHsgYmFja2dyb3VuZDogdmFyKC0tcGFyY2htZW50LWRhcmspOyB9CiAgLmRldGFpbHMtY29udGFpbmVyOjotd2Via2l0LXNjcm9sbGJhci10aHVtYiB7IGJhY2tncm91bmQ6IHZhcigtLWluayk7IGJvcmRlci1yYWRpdXM6IDVweDsgfQoKICAuZGV0YWlscy10aXRsZSB7CiAgICBmb250LWZhbWlseTogJ0NpbnplbCcsIHNlcmlmOwogICAgZm9udC13ZWlnaHQ6IDgwMDsKICAgIHRleHQtYWxpZ246IGNlbnRlcjsKICAgIGZvbnQtc2l6ZTogMS4zcmVtOwogICAgbWFyZ2luLWJvdHRvbTogMTVweDsKICAgIGNvbG9yOiB2YXIoLS1pbmstcmVkKTsKICAgIHRleHQtdHJhbnNmb3JtOiB1cHBlcmNhc2U7CiAgICBsZXR0ZXItc3BhY2luZzogMC4xZW07CiAgICBib3JkZXItYm90dG9tOiAxcHggc29saWQgdmFyKC0taW5rKTsKICAgIHBhZGRpbmctYm90dG9tOiAxMHB4OwogIH0KCiAgLmZsb29yLWhlYWRpbmcgewogICAgZm9udC1mYW1pbHk6ICdDaW56ZWwnLCBzZXJpZjsKICAgIGZvbnQtd2VpZ2h0OiA3MDA7CiAgICBmb250LXNpemU6IDEuMDVyZW07CiAgICBjb2xvcjogdmFyKC0taW5rLXJlZCk7CiAgICBwYWRkaW5nOiA4cHggMDsKICAgIG1hcmdpbjogMTVweCAwIDEwcHg7CiAgICBib3JkZXItYm90dG9tOiAxcHggZGFzaGVkIHZhcigtLWluayk7CiAgICB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOwogICAgbGV0dGVyLXNwYWNpbmc6IDAuMDhlbTsKICB9CgogIC5yb29tLWNhcmQgewogICAgYmFja2dyb3VuZDogcmdiYSgyNTUsIDI0OCwgMjIwLCAwLjUpOwogICAgYm9yZGVyLWxlZnQ6IDRweCBzb2xpZCB2YXIoLS1pbmstcmVkKTsKICAgIHBhZGRpbmc6IDE0cHg7CiAgICBtYXJnaW4tYm90dG9tOiAxMHB4OwogICAgYm9yZGVyLXJhZGl1czogMnB4OwogICAgY3Vyc29yOiBwb2ludGVyOwogICAgdHJhbnNpdGlvbjogYWxsIDAuMnM7CiAgfQoKICAucm9vbS1jYXJkOmhvdmVyIHsKICAgIGJhY2tncm91bmQ6IHJnYmEoMjU1LCAyNDgsIDIyMCwgMC45KTsKICAgIHRyYW5zZm9ybTogdHJhbnNsYXRlWCgzcHgpOwogIH0KCiAgLnJvb20tY2FyZC5oaWdobGlnaHRlZCB7CiAgICBiYWNrZ3JvdW5kOiByZ2JhKDI1NSwgMjIwLCAxNTAsIDAuOSk7CiAgICBib3JkZXItbGVmdC1jb2xvcjogdmFyKC0taW5rLWdvbGQpOwogICAgYm94LXNoYWRvdzogMCAwIDE1cHggcmdiYSgxNjYsIDEyNCwgMCwgMC40KTsKICB9CgogIC5yb29tLW5hbWUgewogICAgZm9udC1mYW1pbHk6ICdDaW56ZWwnLCBzZXJpZjsKICAgIGZvbnQtd2VpZ2h0OiA2MDA7CiAgICBmb250LXNpemU6IDEuMDVyZW07CiAgICBjb2xvcjogdmFyKC0taW5rLXJlZCk7CiAgICBtYXJnaW4tYm90dG9tOiA1cHg7CiAgICBkaXNwbGF5OiBmbGV4OwogICAganVzdGlmeS1jb250ZW50OiBzcGFjZS1iZXR3ZWVuOwogICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICB9CgogIC5yb29tLW51bWJlciB7CiAgICBiYWNrZ3JvdW5kOiB2YXIoLS1pbmspOwogICAgY29sb3I6IHZhcigtLXBhcmNobWVudCk7CiAgICBtaW4td2lkdGg6IDMwcHg7CiAgICBoZWlnaHQ6IDI2cHg7CiAgICBib3JkZXItcmFkaXVzOiAxM3B4OwogICAgZGlzcGxheTogZmxleDsKICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICAgIGZvbnQtc2l6ZTogMC44cmVtOwogICAgZm9udC1mYW1pbHk6ICdDaW56ZWwnLCBzZXJpZjsKICAgIHBhZGRpbmc6IDAgOHB4OwogIH0KCiAgLnJvb20tZGV0YWlsIHsKICAgIGZvbnQtc2l6ZTogMC45NXJlbTsKICAgIG1hcmdpbjogNHB4IDA7CiAgICBsaW5lLWhlaWdodDogMS40OwogIH0KCiAgLnJvb20tZGV0YWlsIHN0cm9uZyB7CiAgICBmb250LWZhbWlseTogJ0NpbnplbCcsIHNlcmlmOwogICAgY29sb3I6IHZhcigtLWluayk7CiAgICB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOwogICAgZm9udC1zaXplOiAwLjhyZW07CiAgICBsZXR0ZXItc3BhY2luZzogMC4wNWVtOwogIH0KCiAgLmxvb3QtdGFnLCAudHJhcC10YWcsIC5jcmVhdHVyZS10YWcsIC5zdGFpcnMtdGFnIHsKICAgIGRpc3BsYXk6IGlubGluZS1ibG9jazsKICAgIHBhZGRpbmc6IDJweCA4cHg7CiAgICBtYXJnaW46IDJweCAzcHggMnB4IDA7CiAgICBib3JkZXItcmFkaXVzOiAzcHg7CiAgICBmb250LXNpemU6IDAuODhyZW07CiAgfQoKICAubG9vdC10YWcgeyBiYWNrZ3JvdW5kOiByZ2JhKDE2NiwgMTI0LCAwLCAwLjMpOyBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1pbmstZ29sZCk7IH0KICAudHJhcC10YWcgeyBiYWNrZ3JvdW5kOiByZ2JhKDEzOSwgMzcsIDgsIDAuMyk7IGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWluay1yZWQpOyB9CiAgLmNyZWF0dXJlLXRhZyB7IGJhY2tncm91bmQ6IHJnYmEoNTgsIDQwLCAyMywgMC4yKTsgYm9yZGVyOiAxcHggc29saWQgdmFyKC0taW5rKTsgfQogIC5zdGFpcnMtdGFnIHsgYmFja2dyb3VuZDogcmdiYSg0NSwgNzQsIDI2LCAwLjMpOyBib3JkZXI6IDFweCBzb2xpZCAjMmQ0YTFhOyB9CgogIC5sZWdlbmQgewogICAgbWFyZ2luLXRvcDogMTVweDsKICAgIHBhZGRpbmc6IDEwcHg7CiAgICBiYWNrZ3JvdW5kOiByZ2JhKDI1NSwgMjQ4LCAyMjAsIDAuNSk7CiAgICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1pbmspOwogICAgYm9yZGVyLXJhZGl1czogNHB4OwogICAgZm9udC1zaXplOiAwLjg1cmVtOwogICAgdGV4dC1hbGlnbjogY2VudGVyOwogIH0KCiAgLmxlZ2VuZC1pdGVtIHsgZGlzcGxheTogaW5saW5lLWJsb2NrOyBtYXJnaW46IDNweCA4cHg7IH0KCiAgLmxlZ2VuZC1zd2F0Y2ggewogICAgZGlzcGxheTogaW5saW5lLWJsb2NrOwogICAgd2lkdGg6IDE0cHg7CiAgICBoZWlnaHQ6IDE0cHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogbWlkZGxlOwogICAgbWFyZ2luLXJpZ2h0OiA1cHg7CiAgICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1pbmspOwogIH0KCiAgLyogVG9vbHRpcCBhIHTDqXJrw6lwIGZlbGV0dCAqLwogIC5jYW52YXMtd3JhcHBlciB7CiAgICBwb3NpdGlvbjogcmVsYXRpdmU7CiAgfQoKICAjbWFwVG9vbHRpcCB7CiAgICBwb3NpdGlvbjogYWJzb2x1dGU7CiAgICBwb2ludGVyLWV2ZW50czogbm9uZTsKICAgIGJhY2tncm91bmQ6IHZhcigtLWluayk7CiAgICBjb2xvcjogdmFyKC0tcGFyY2htZW50KTsKICAgIHBhZGRpbmc6IDZweCAxMnB4OwogICAgYm9yZGVyOiAycHggc29saWQgdmFyKC0taW5rLWdvbGQpOwogICAgYm9yZGVyLXJhZGl1czogNHB4OwogICAgZm9udC1mYW1pbHk6ICdDaW56ZWwnLCBzZXJpZjsKICAgIGZvbnQtc2l6ZTogMC44NXJlbTsKICAgIGZvbnQtd2VpZ2h0OiA2MDA7CiAgICBsZXR0ZXItc3BhY2luZzogMC4wNWVtOwogICAgd2hpdGUtc3BhY2U6IG5vd3JhcDsKICAgIGJveC1zaGFkb3c6IDAgNHB4IDEwcHggcmdiYSgwLDAsMCwwLjYpOwogICAgei1pbmRleDogMTA7CiAgICBkaXNwbGF5OiBub25lOwogICAgdHJhbnNpdGlvbjogb3BhY2l0eSAwLjFzOwogIH0KCiAgI21hcFRvb2x0aXAudmlzaWJsZSB7IGRpc3BsYXk6IGJsb2NrOyB9CgogICNtYXBUb29sdGlwIC50b29sdGlwLXJvb20gewogICAgZm9udC1zaXplOiAwLjdyZW07CiAgICBvcGFjaXR5OiAwLjc7CiAgICBmb250LXdlaWdodDogNDAwOwogICAgZGlzcGxheTogYmxvY2s7CiAgICBmb250LXN0eWxlOiBpdGFsaWM7CiAgICBtYXJnaW4tdG9wOiAycHg7CiAgfQo8L3N0eWxlPgo8L2hlYWQ+Cjxib2R5Pgo8ZGl2IGNsYXNzPSJjb250YWluZXIiPgogIDxoZWFkZXI+CiAgICA8aDE+4pqUIEQmRCDDiXDDvGxldCBHZW5lcsOhdG9yIOKalDwvaDE+CiAgICA8cCBjbGFzcz0ic3VidGl0bGUiPn4gVMO2YmJzemludGVzIMOpcMO8bGV0ZWsgZ2FyYW50w6FsdCDDunR2b25hbGFra2FsIH48L3A+CiAgPC9oZWFkZXI+CgogIDxkaXYgY2xhc3M9ImNvbnRyb2xzIj4KICAgIDxkaXYgY2xhc3M9ImNvbnRyb2xzLWdyaWQiPgogICAgICA8ZGl2IGNsYXNzPSJjb250cm9sLWdyb3VwIj4KICAgICAgICA8bGFiZWw+w4lww7xsZXQgVMOtcHVzPC9sYWJlbD4KICAgICAgICA8c2VsZWN0IGlkPSJidWlsZGluZ1R5cGUiPgogICAgICAgICAgPG9wdGlvbiB2YWx1ZT0idGF2ZXJuIj5Gb2dhZMOzIC8gS29jc21hPC9vcHRpb24+CiAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJkdW5nZW9uIj5Uw7ZtbMO2YyAvIER1bmdlb248L29wdGlvbj4KICAgICAgICAgIDxvcHRpb24gdmFsdWU9Im1hbnNpb24iPk5lbWVzaSBLw7pyaWE8L29wdGlvbj4KICAgICAgICAgIDxvcHRpb24gdmFsdWU9InRlbXBsZSI+VGVtcGxvbTwvb3B0aW9uPgogICAgICAgICAgPG9wdGlvbiB2YWx1ZT0id2l6YXJkIj5WYXLDoXpzbMOzIFRvcm9ueTwvb3B0aW9uPgogICAgICAgICAgPG9wdGlvbiB2YWx1ZT0icnVpbnMiPlJvbW9rPC9vcHRpb24+CiAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJ0aGlldmVzIj5Ub2x2YWp0YW55YTwvb3B0aW9uPgogICAgICAgIDwvc2VsZWN0PgogICAgICA8L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0iY29udHJvbC1ncm91cCI+CiAgICAgICAgPGxhYmVsPlN6aW50ZWsgU3rDoW1hPC9sYWJlbD4KICAgICAgICA8c2VsZWN0IGlkPSJudW1GbG9vcnMiPgogICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iMSI+MSBzemludDwvb3B0aW9uPgogICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iMiIgc2VsZWN0ZWQ+MiBzemludDwvb3B0aW9uPgogICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iMyI+MyBzemludDwvb3B0aW9uPgogICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iNCI+NCBzemludDwvb3B0aW9uPgogICAgICAgIDwvc2VsZWN0PgogICAgICA8L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0iY29udHJvbC1ncm91cCI+CiAgICAgICAgPGxhYmVsPlN6b2LDoWsgLyBTemludDwvbGFiZWw+CiAgICAgICAgPHNlbGVjdCBpZD0icm9vbXNQZXJGbG9vciI+CiAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJzbWFsbCI+My01PC9vcHRpb24+CiAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJtZWRpdW0iIHNlbGVjdGVkPjUtODwvb3B0aW9uPgogICAgICAgICAgPG9wdGlvbiB2YWx1ZT0ibGFyZ2UiPjgtMTI8L29wdGlvbj4KICAgICAgICA8L3NlbGVjdD4KICAgICAgPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImNvbnRyb2wtZ3JvdXAiPgogICAgICAgIDxsYWJlbD5WZXN6w6lseXN6aW50PC9sYWJlbD4KICAgICAgICA8c2VsZWN0IGlkPSJkYW5nZXJMZXZlbCI+CiAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJzYWZlIj5CaXp0b25zw6Fnb3M8L29wdGlvbj4KICAgICAgICAgIDxvcHRpb24gdmFsdWU9Im1lZGl1bSIgc2VsZWN0ZWQ+S8O2emVwZXM8L29wdGlvbj4KICAgICAgICAgIDxvcHRpb24gdmFsdWU9ImRlYWRseSI+SGFsw6Fsb3M8L29wdGlvbj4KICAgICAgICA8L3NlbGVjdD4KICAgICAgPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImNvbnRyb2wtZ3JvdXAiPgogICAgICAgIDxsYWJlbD5Sw6FjcyBNw6lyZXRlPC9sYWJlbD4KICAgICAgICA8c2VsZWN0IGlkPSJncmlkU2l6ZSI+CiAgICAgICAgICA8b3B0aW9uIHZhbHVlPSIyNSI+MjUgeCAyNTwvb3B0aW9uPgogICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iMzAiIHNlbGVjdGVkPjMwIHggMzA8L29wdGlvbj4KICAgICAgICAgIDxvcHRpb24gdmFsdWU9IjM1Ij4zNSB4IDM1PC9vcHRpb24+CiAgICAgICAgPC9zZWxlY3Q+CiAgICAgIDwvZGl2PgogICAgPC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJidXR0b24tcm93Ij4KICAgICAgPGJ1dHRvbiBvbmNsaWNrPSJnZW5lcmF0ZUJ1aWxkaW5nKCkiPvCfjrIgR2VuZXLDoWzDoXM8L2J1dHRvbj4KICAgICAgPGJ1dHRvbiBjbGFzcz0ic2Vjb25kYXJ5IiBvbmNsaWNrPSJleHBvcnRNYXAoKSI+8J+TnCBUw6lya8OpcCBMZXTDtmx0w6lzZTwvYnV0dG9uPgogICAgPC9kaXY+CiAgPC9kaXY+CgogIDxkaXYgY2xhc3M9Im1haW4tY29udGVudCI+CiAgICA8ZGl2IGNsYXNzPSJtYXAtY29udGFpbmVyIj4KICAgICAgPGRpdiBjbGFzcz0ibWFwLXRpdGxlIiBpZD0ibWFwVGl0bGUiPkEgTsOpdnRlbGVuIMOJcMO8bGV0PC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImZsb29yLXRhYnMiIGlkPSJmbG9vclRhYnMiPjwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJjYW52YXMtd3JhcHBlciI+CiAgICAgICAgPGNhbnZhcyBpZD0ibWFwQ2FudmFzIiB3aWR0aD0iOTAwIiBoZWlnaHQ9IjkwMCI+PC9jYW52YXM+CiAgICAgICAgPGRpdiBpZD0ibWFwVG9vbHRpcCI+PC9kaXY+CiAgICAgIDwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJsZWdlbmQiPgogICAgICAgIDxzcGFuIGNsYXNzPSJsZWdlbmQtaXRlbSI+PHNwYW4gY2xhc3M9ImxlZ2VuZC1zd2F0Y2giIHN0eWxlPSJiYWNrZ3JvdW5kOiNlOGQ0YTgiPjwvc3Bhbj5Tem9iYTwvc3Bhbj4KICAgICAgICA8c3BhbiBjbGFzcz0ibGVnZW5kLWl0ZW0iPjxzcGFuIGNsYXNzPSJsZWdlbmQtc3dhdGNoIiBzdHlsZT0iYmFja2dyb3VuZDojYzlhODc3Ij48L3NwYW4+Rm9seW9zw7M8L3NwYW4+CiAgICAgICAgPHNwYW4gY2xhc3M9ImxlZ2VuZC1pdGVtIj48c3BhbiBjbGFzcz0ibGVnZW5kLXN3YXRjaCIgc3R5bGU9ImJhY2tncm91bmQ6IzVhM2ExYSI+PC9zcGFuPkFqdMOzPC9zcGFuPgogICAgICAgIDxzcGFuIGNsYXNzPSJsZWdlbmQtaXRlbSI+PHNwYW4gY2xhc3M9ImxlZ2VuZC1zd2F0Y2giIHN0eWxlPSJiYWNrZ3JvdW5kOiMyZDRhMWEiPjwvc3Bhbj5Mw6lwY3PFkTwvc3Bhbj4KICAgICAgICA8c3BhbiBjbGFzcz0ibGVnZW5kLWl0ZW0iPjxzcGFuIGNsYXNzPSJsZWdlbmQtc3dhdGNoIiBzdHlsZT0iYmFja2dyb3VuZDojYTY3YzAwIj48L3NwYW4+S2luY3M8L3NwYW4+CiAgICAgICAgPHNwYW4gY2xhc3M9ImxlZ2VuZC1pdGVtIj48c3BhbiBjbGFzcz0ibGVnZW5kLXN3YXRjaCIgc3R5bGU9ImJhY2tncm91bmQ6IzhiMjUwOCI+PC9zcGFuPkNzYXBkYTwvc3Bhbj4KICAgICAgPC9kaXY+CiAgICA8L2Rpdj4KCiAgICA8ZGl2IGNsYXNzPSJkZXRhaWxzLWNvbnRhaW5lciI+CiAgICAgIDxkaXYgY2xhc3M9ImRldGFpbHMtdGl0bGUiPvCfk5YgU3pvYmEgTGXDrXLDoXNvazwvZGl2PgogICAgICA8ZGl2IGlkPSJyb29tRGV0YWlscyI+PC9kaXY+CiAgICA8L2Rpdj4KICA8L2Rpdj4KPC9kaXY+Cgo8c2NyaXB0PgovLyA9PT09PT09PT09PT0gQsOaVE9SIFTDjVBVU09LID09PT09PT09PT09PQovLyBwbGFjZW1lbnQ6IGhvbCBoZWx5ZXpoZXTFkSBlbCDigJQgJ3dhbGwnIChmYWwgbWVsbGV0dCksICdjb3JuZXInIChzYXJva2JhbiksCi8vICAgICAgICAgICAgJ2NlbnRlcicgKHN6b2LDoWJhbiBiw6FyaG9sIGvDtnrDqXByw6lzemVuKSwgJ2FueScgKGLDoXJob2wpCi8vIHByaW9yaXR5OiBtYWdhc2FiYiA9IGVsxZFiYiBrZXLDvGwgbGVoZWx5ZXrDqXNyZQovLyBwYWlyZWQ6IGhhIHZhbiwgZXogYSBiw7p0b3IgZWd5ICJjc29wb3J0IiB0YWdqYSAocGwuIGJlZCtuaWdodHN0YW5kLCB0YWJsZStjaGFpcnMpCmNvbnN0IEZVUk5JVFVSRV9UWVBFUyA9IHsKICBiZWQ6ICAgICAgICB7IHN5bWJvbDogJ+KWrScsIGNvbG9yOiAnIzZiNDQyMycsIGxhYmVsOiAnw4FneScsICAgICAgICAgICAgcGxhY2VtZW50OiAnd2FsbCcsICAgcHJpb3JpdHk6IDEwIH0sCiAgYnVuazogICAgICAgeyBzeW1ib2w6ICfiiaEnLCBjb2xvcjogJyM2YjQ0MjMnLCBsYWJlbDogJ1ByaWNjcycsICAgICAgICAgcGxhY2VtZW50OiAnd2FsbCcsICAgcHJpb3JpdHk6IDkgfSwKICBuaWdodHN0YW5kOiB7IHN5bWJvbDogJ+KWqicsIGNvbG9yOiAnIzVhM2ExYScsIGxhYmVsOiAnw4lqamVsaXN6ZWtyw6lueScsIHBsYWNlbWVudDogJ3dhbGwnLCAgIHByaW9yaXR5OiA1IH0sCiAgdGFibGU6ICAgICAgeyBzeW1ib2w6ICfilqEnLCBjb2xvcjogJyM4YjVhMmInLCBsYWJlbDogJ0FzenRhbCcsICAgICAgICAgcGxhY2VtZW50OiAnY2VudGVyJywgcHJpb3JpdHk6IDggfSwKICBsb25ndGFibGU6ICB7IHN5bWJvbDogJ+KWrCcsIGNvbG9yOiAnIzhiNWEyYicsIGxhYmVsOiAnSG9zc3rDuiBhc3p0YWwnLCAgcGxhY2VtZW50OiAnY2VudGVyJywgcHJpb3JpdHk6IDkgfSwKICBjaGFpcjogICAgICB7IHN5bWJvbDogJ8K3JywgY29sb3I6ICcjNWEzYTFhJywgbGFiZWw6ICdTesOpaycsICAgICAgICAgICBwbGFjZW1lbnQ6ICdhbnknLCAgICBwcmlvcml0eTogMiB9LAogIGJhcnN0b29sOiAgIHsgc3ltYm9sOiAn4oiYJywgY29sb3I6ICcjNWEzYTFhJywgbGFiZWw6ICdCw6Fyc3rDqWsnLCAgICAgICAgcGxhY2VtZW50OiAnYW55JywgICAgcHJpb3JpdHk6IDMgfSwKICBjaGVzdDogICAgICB7IHN5bWJvbDogJ+KXiCcsIGNvbG9yOiAnI2E2N2MwMCcsIGxhYmVsOiAnTMOhZGEnLCAgICAgICAgICAgcGxhY2VtZW50OiAnY29ybmVyJywgcHJpb3JpdHk6IDcgfSwKICBiYXJyZWw6ICAgICB7IHN5bWJvbDogJ+KXiycsIGNvbG9yOiAnIzVhM2ExYScsIGxhYmVsOiAnSG9yZMOzJywgICAgICAgICAgcGxhY2VtZW50OiAnd2FsbCcsICAgcHJpb3JpdHk6IDUgfSwKICBzaGVsZjogICAgICB7IHN5bWJvbDogJ+KWpCcsIGNvbG9yOiAnIzZiNDQyMycsIGxhYmVsOiAnUG9sYycsICAgICAgICAgICBwbGFjZW1lbnQ6ICd3YWxsJywgICBwcmlvcml0eTogNiB9LAogIGJvb2tjYXNlOiAgIHsgc3ltYm9sOiAn4palJywgY29sb3I6ICcjNGEyYzE3JywgbGFiZWw6ICdLw7ZueXZlc3BvbGMnLCAgICBwbGFjZW1lbnQ6ICd3YWxsJywgICBwcmlvcml0eTogNyB9LAogIGFsdGFyOiAgICAgIHsgc3ltYm9sOiAn4pyaJywgY29sb3I6ICcjOGIyNTA4JywgbGFiZWw6ICdPbHTDoXInLCAgICAgICAgICBwbGFjZW1lbnQ6ICdjZW50ZXInLCBwcmlvcml0eTogMTAgfSwKICBmaXJlcGxhY2U6ICB7IHN5bWJvbDogJ+KWsicsIGNvbG9yOiAnIzhiMjUwOCcsIGxhYmVsOiAnS2FuZGFsbMOzJywgICAgICAgcGxhY2VtZW50OiAnd2FsbCcsICAgcHJpb3JpdHk6IDkgfSwKICBiYXI6ICAgICAgICB7IHN5bWJvbDogJ+KVkCcsIGNvbG9yOiAnIzZiNDQyMycsIGxhYmVsOiAnQsOhcnB1bHQnLCAgICAgICAgcGxhY2VtZW50OiAnd2FsbCcsICAgcHJpb3JpdHk6IDEwIH0sCiAgY2F1bGRyb246ICAgeyBzeW1ib2w6ICfil68nLCBjb2xvcjogJyMyZDJkMmQnLCBsYWJlbDogJ8Occ3QnLCAgICAgICAgICAgIHBsYWNlbWVudDogJ2Nvcm5lcicsIHByaW9yaXR5OiA2IH0sCiAgY29mZmluOiAgICAgeyBzeW1ib2w6ICfilq0nLCBjb2xvcjogJyMzYTI4MTcnLCBsYWJlbDogJ0tvcG9yc8OzJywgICAgICAgIHBsYWNlbWVudDogJ3dhbGwnLCAgIHByaW9yaXR5OiA4IH0sCiAgc3RhdHVlOiAgICAgeyBzeW1ib2w6ICfimaYnLCBjb2xvcjogJyM2YjZiNmInLCBsYWJlbDogJ1N6b2JvcicsICAgICAgICAgcGxhY2VtZW50OiAnY29ybmVyJywgcHJpb3JpdHk6IDYgfSwKICBjcnlzdGFsOiAgICB7IHN5bWJvbDogJ+KXiicsIGNvbG9yOiAnIzVhOGJhOCcsIGxhYmVsOiAnS3Jpc3TDoWx5JywgICAgICAgcGxhY2VtZW50OiAnYW55JywgICAgcHJpb3JpdHk6IDUgfSwKICBydWJibGU6ICAgICB7IHN5bWJvbDogJ+KItCcsIGNvbG9yOiAnIzVhM2ExYScsIGxhYmVsOiAnVMO2cm1lbMOpaycsICAgICAgIHBsYWNlbWVudDogJ2FueScsICAgIHByaW9yaXR5OiAxIH0sCiAgd2VhcG9uOiAgICAgeyBzeW1ib2w6ICfinKYnLCBjb2xvcjogJyM2YjZiNmInLCBsYWJlbDogJ0ZlZ3l2ZXLDoWxsdsOhbnknLCBwbGFjZW1lbnQ6ICd3YWxsJywgICBwcmlvcml0eTogNSB9LAogIGNlbGw6ICAgICAgIHsgc3ltYm9sOiAn4pamJywgY29sb3I6ICcjM2EyODE3JywgbGFiZWw6ICdSw6Fjcy9LZXRyZWMnLCAgICBwbGFjZW1lbnQ6ICd3YWxsJywgICBwcmlvcml0eTogOCB9LAogIHRvcnR1cmU6ICAgIHsgc3ltYm9sOiAn4pyWJywgY29sb3I6ICcjOGIyNTA4JywgbGFiZWw6ICdLw61uesOzZXN6a8O2eicsICAgIHBsYWNlbWVudDogJ2NlbnRlcicsIHByaW9yaXR5OiA4IH0sCiAgZGVzazogICAgICAgeyBzeW1ib2w6ICfilqYnLCBjb2xvcjogJyM4YjVhMmInLCBsYWJlbDogJ8ONcsOzYXN6dGFsJywgICAgICBwbGFjZW1lbnQ6ICd3YWxsJywgICBwcmlvcml0eTogNyB9LAogIHdhcmRyb2JlOiAgIHsgc3ltYm9sOiAn4palJywgY29sb3I6ICcjNGEyYzE3JywgbGFiZWw6ICdTemVrcsOpbnknLCAgICAgICBwbGFjZW1lbnQ6ICd3YWxsJywgICBwcmlvcml0eTogNiB9LAogIHJ1ZzogICAgICAgIHsgc3ltYm9sOiAn4peHJywgY29sb3I6ICcjOGIyNTA4JywgbGFiZWw6ICdTesWRbnllZycsICAgICAgICBwbGFjZW1lbnQ6ICdjZW50ZXInLCBwcmlvcml0eTogMyB9LAogIHNhY2s6ICAgICAgIHsgc3ltYm9sOiAn4peQJywgY29sb3I6ICcjNmI0NDIzJywgbGFiZWw6ICdac8OhaycsICAgICAgICAgICBwbGFjZW1lbnQ6ICdjb3JuZXInLCBwcmlvcml0eTogMyB9LAogIGFudmlsOiAgICAgIHsgc3ltYm9sOiAn4oyCJywgY29sb3I6ICcjM2EzYTNhJywgbGFiZWw6ICfDnGxsxZEnLCAgICAgICAgICAgcGxhY2VtZW50OiAnY2VudGVyJywgcHJpb3JpdHk6IDcgfSwKICBwaWFubzogICAgICB7IHN5bWJvbDogJ+KZqicsIGNvbG9yOiAnIzFhMWExYScsIGxhYmVsOiAnSGFuZ3N6ZXInLCAgICAgICBwbGFjZW1lbnQ6ICd3YWxsJywgICBwcmlvcml0eTogNyB9LAogIHBhaW50aW5nOiAgIHsgc3ltYm9sOiAn4paiJywgY29sb3I6ICcjYTY3YzAwJywgbGFiZWw6ICdGZXN0bcOpbnknLCAgICAgICBwbGFjZW1lbnQ6ICd3YWxsJywgICBwcmlvcml0eTogNCB9LAogIHBsYW50OiAgICAgIHsgc3ltYm9sOiAn4py/JywgY29sb3I6ICcjMmQ2YjJkJywgbGFiZWw6ICdOw7Z2w6lueScsICAgICAgICAgcGxhY2VtZW50OiAnY29ybmVyJywgcHJpb3JpdHk6IDMgfSwKICAvLyDDmmogYsO6dG9yb2s6IGbDvHJkxZEvbW9zZMOzL2tvbnloYQogIHRvaWxldDogICAgIHsgc3ltYm9sOiAnypgnLCBjb2xvcjogJyM1YTVhOGEnLCBsYWJlbDogJ1dDJywgICAgICAgICAgICAgcGxhY2VtZW50OiAnY29ybmVyJywgcHJpb3JpdHk6IDggfSwKICBiYXRodHViOiAgICB7IHN5bWJvbDogJ+KPoScsIGNvbG9yOiAnIzVhOGJhOCcsIGxhYmVsOiAnRsO8cmTFkWvDoWQnLCAgICAgICBwbGFjZW1lbnQ6ICd3YWxsJywgICBwcmlvcml0eTogOCB9LAogIHdhc2hiYXNpbjogIHsgc3ltYm9sOiAn4pehJywgY29sb3I6ICcjNWE4YmE4JywgbGFiZWw6ICdNb3Nkw7NrYWd5bMOzJywgICAgcGxhY2VtZW50OiAnd2FsbCcsICAgcHJpb3JpdHk6IDcgfSwKICBzdG92ZTogICAgICB7IHN5bWJvbDogJ+KWpScsIGNvbG9yOiAnIzhiMjUwOCcsIGxhYmVsOiAnVMWxemhlbHknLCAgICAgICAgcGxhY2VtZW50OiAnd2FsbCcsICAgcHJpb3JpdHk6IDggfSwKICB3ZWxsOiAgICAgICB7IHN5bWJvbDogJ+KXjicsIGNvbG9yOiAnIzVhOGJhOCcsIGxhYmVsOiAnS8O6dCcsICAgICAgICAgICAgcGxhY2VtZW50OiAnY2VudGVyJywgcHJpb3JpdHk6IDcgfSwKfTsKCi8vIFN6b2JhbmV2ZWsg4oaSIGLDunRvciAicmVjZXB0ZWsiLiBNaW5kZW4gc3pvYmEga2FwIGVneSAiY29yZSIgbGlzdMOhdCAoa8O2dGVsZXrFkSBiw7p0b3JvaykKLy8gw6lzIGVneSAib3B0aW9uYWwiIGxpc3TDoXQgKGFtaWLFkWwgYSBzem9iYSBtw6lyZXRlIHN6ZXJpbnQgdsOhbGFzenR1bmspLgovLyBBIGNoYWlyQ291bnQ6IGF6IGFzenRhbCBrw7Zyw7xsIGF1dG9tYXRpa3VzYW4gZWxoZWx5ZXplbmTFkSBzesOpa2VrIHN6w6FtYS4KY29uc3QgUk9PTV9GVVJOSVRVUkUgPSB7CiAgLy8gLS0tIEtvY3NtYSAtLS0KICAiU8O2bnTDqXMiOiAgICAgICAgICAgIHsgY29yZTogWydiYXInLCAnYmFyc3Rvb2wnLCAnYmFyc3Rvb2wnLCAnYmFyc3Rvb2wnXSwgb3B0aW9uYWw6IFsnYmFycmVsJywgJ3NoZWxmJywgJ3RhYmxlJywgJ2NoYWlyJywgJ2NoYWlyJywgJ2ZpcmVwbGFjZSddIH0sCiAgIkvDtnrDtnMgVGVyZW0iOiAgICAgICB7IGNvcmU6IFsnZmlyZXBsYWNlJywgJ2xvbmd0YWJsZSddLCBvcHRpb25hbDogWyd0YWJsZScsICdjaGFpcicsICdjaGFpcicsICdjaGFpcicsICdjaGFpcicsICdjaGFpcicsICdjaGFpcicsICdjaGFpciddIH0sCiAgIktvbnloYSI6ICAgICAgICAgICAgeyBjb3JlOiBbJ3N0b3ZlJywgJ2NhdWxkcm9uJywgJ3RhYmxlJ10sIG9wdGlvbmFsOiBbJ3NoZWxmJywgJ3NoZWxmJywgJ2JhcnJlbCcsICdzYWNrJ10gfSwKICAiS2FtcmEiOiAgICAgICAgICAgICB7IGNvcmU6IFsnc2hlbGYnLCAnc2hlbGYnXSwgb3B0aW9uYWw6IFsnYmFycmVsJywgJ2JhcnJlbCcsICdzYWNrJywgJ3NhY2snXSB9LAogICJWZW5kw6lnc3pvYmEiOiAgICAgICB7IGNvcmU6IFsnYmVkJywgJ25pZ2h0c3RhbmQnXSwgb3B0aW9uYWw6IFsnY2hlc3QnLCAnd2FyZHJvYmUnLCAnY2hhaXInLCAnd2FzaGJhc2luJ10gfSwKICAiSXN0w6FsbMOzIjogICAgICAgICAgIHsgY29yZTogWydzYWNrJywgJ3NhY2snXSwgb3B0aW9uYWw6IFsnYmFycmVsJywgJ3NoZWxmJywgJ3NhY2snXSB9LAogICJQaW5jZSI6ICAgICAgICAgICAgIHsgY29yZTogWydiYXJyZWwnLCAnYmFycmVsJywgJ2JhcnJlbCddLCBvcHRpb25hbDogWydzaGVsZicsICdjaGVzdCcsICdiYXJyZWwnXSB9LAogICJUdWxhamRvbm9zIFN6b2LDoWphIjp7IGNvcmU6IFsnYmVkJywgJ25pZ2h0c3RhbmQnLCAnZGVzaycsICdjaGFpciddLCBvcHRpb25hbDogWydjaGVzdCcsICdib29rY2FzZScsICd3YXJkcm9iZScsICdmaXJlcGxhY2UnXSB9LAogICJNb3Nkw7MiOiAgICAgICAgICAgICB7IGNvcmU6IFsnYmF0aHR1YicsICd0b2lsZXQnLCAnd2FzaGJhc2luJ10sIG9wdGlvbmFsOiBbJ3NoZWxmJywgJ2NoZXN0J10gfSwKICAiUmFrdMOhciI6ICAgICAgICAgICAgeyBjb3JlOiBbJ3NoZWxmJywgJ3NoZWxmJywgJ3NoZWxmJ10sIG9wdGlvbmFsOiBbJ2JhcnJlbCcsICdjaGVzdCcsICdzYWNrJywgJ3NhY2snXSB9LAogICJLw6FydHlhc3pvYmEiOiAgICAgICB7IGNvcmU6IFsndGFibGUnLCAnZmlyZXBsYWNlJ10sIG9wdGlvbmFsOiBbJ2NoYWlyJywgJ2NoYWlyJywgJ2NoYWlyJywgJ2NoYWlyJywgJ3J1ZycsICdwYWludGluZyddIH0sCiAgIk1hZ8OhbiDDiXRrZXrFkSI6ICAgICAgeyBjb3JlOiBbJ2xvbmd0YWJsZScsICdmaXJlcGxhY2UnXSwgb3B0aW9uYWw6IFsnY2hhaXInLCAnY2hhaXInLCAnY2hhaXInLCAnY2hhaXInLCAncGFpbnRpbmcnLCAncnVnJ10gfSwKCiAgLy8gLS0tIFTDtm1sw7ZjIC0tLQogICJCw7ZydMO2bmNlbGxhIjogICAgICAgeyBjb3JlOiBbJ2NlbGwnLCAnYnVuayddLCBvcHRpb25hbDogWydzYWNrJ10gfSwKICAiS8OtbnrDs2thbXJhIjogICAgICAgIHsgY29yZTogWyd0b3J0dXJlJywgJ2ZpcmVwbGFjZScsICd0YWJsZSddLCBvcHRpb25hbDogWydjaGVzdCcsICdjZWxsJywgJ3dlYXBvbiddIH0sCiAgIsWQcnN6b2JhIjogICAgICAgICAgIHsgY29yZTogWyd0YWJsZScsICdmaXJlcGxhY2UnLCAnd2VhcG9uJ10sIG9wdGlvbmFsOiBbJ2NoYWlyJywgJ2NoYWlyJywgJ2J1bmsnLCAnY2hlc3QnXSB9LAogICJQb3Jrb2zDoWIgU3pvYsOhamEiOiAgeyBjb3JlOiBbJ2JlZCcsICduaWdodHN0YW5kJywgJ2Rlc2snLCAnY2hhaXInXSwgb3B0aW9uYWw6IFsnY2hlc3QnLCAnd2VhcG9uJywgJ2ZpcmVwbGFjZSddIH0sCiAgIkZlZ3l2ZXJyYWt0w6FyIjogICAgIHsgY29yZTogWyd3ZWFwb24nLCAnd2VhcG9uJywgJ3dlYXBvbicsICdhbnZpbCddLCBvcHRpb25hbDogWydzaGVsZicsICdjaGVzdCddIH0sCiAgIkh1bGxha2FtcmEiOiAgICAgICAgeyBjb3JlOiBbJ2NvZmZpbicsICdjb2ZmaW4nLCAndGFibGUnXSwgb3B0aW9uYWw6IFsnY29mZmluJywgJ3NoZWxmJ10gfSwKICAiS3JpcHRhIjogICAgICAgICAgICB7IGNvcmU6IFsnYWx0YXInLCAnY29mZmluJywgJ2NvZmZpbiddLCBvcHRpb25hbDogWydjb2ZmaW4nLCAnc3RhdHVlJywgJ3N0YXR1ZSddIH0sCiAgIlJpdHXDoWxpcyBTemVudMOpbHkiOiB7IGNvcmU6IFsnYWx0YXInLCAnY2F1bGRyb24nXSwgb3B0aW9uYWw6IFsnc3RhdHVlJywgJ3N0YXR1ZScsICdydWcnXSB9LAogICJUaXRrb3Mgw4F0asOhcsOzIjogICAgIHsgY29yZTogWydzaGVsZiddLCBvcHRpb25hbDogWydjaGVzdCcsICdydWJibGUnXSB9LAogICJGw7ZsZGFsYXR0aSBGb2x5w7MiOiAgeyBjb3JlOiBbJ3J1YmJsZScsICdydWJibGUnXSwgb3B0aW9uYWw6IFsncnViYmxlJ10gfSwKICAiQ3NvbnRrYW1yYSI6ICAgICAgICB7IGNvcmU6IFsnY29mZmluJywgJ2NvZmZpbiddLCBvcHRpb25hbDogWydydWJibGUnLCAncnViYmxlJ10gfSwKICAiS2luY3NlcyBTem9iYSI6ICAgICB7IGNvcmU6IFsnY2hlc3QnLCAnY2hlc3QnLCAnY2hlc3QnLCAnY2hlc3QnXSwgb3B0aW9uYWw6IFsnc3RhdHVlJywgJ3dlYXBvbiddIH0sCgogIC8vIC0tLSBLw7pyaWEgLS0tCiAgIkLDoWx0ZXJlbSI6ICAgICAgICAgIHsgY29yZTogWydwaWFubycsICdmaXJlcGxhY2UnXSwgb3B0aW9uYWw6IFsnbG9uZ3RhYmxlJywgJ2NoYWlyJywgJ2NoYWlyJywgJ2NoYWlyJywgJ3N0YXR1ZScsICdwYWludGluZycsICdydWcnLCAncGxhbnQnXSB9LAogICJLw7ZueXZ0w6FyIjogICAgICAgICAgeyBjb3JlOiBbJ2Jvb2tjYXNlJywgJ2Jvb2tjYXNlJywgJ2Jvb2tjYXNlJywgJ2Rlc2snLCAnY2hhaXInXSwgb3B0aW9uYWw6IFsnYm9va2Nhc2UnLCAnZmlyZXBsYWNlJywgJ3J1ZyddIH0sCiAgIsOJdGtlesWRIjogICAgICAgICAgICB7IGNvcmU6IFsnbG9uZ3RhYmxlJywgJ2ZpcmVwbGFjZSddLCBvcHRpb25hbDogWydjaGFpcicsICdjaGFpcicsICdjaGFpcicsICdjaGFpcicsICdjaGFpcicsICdjaGFpcicsICdwYWludGluZyddIH0sCiAgIkjDoWzDs3N6b2JhIjogICAgICAgICB7IGNvcmU6IFsnYmVkJywgJ25pZ2h0c3RhbmQnLCAnd2FyZHJvYmUnXSwgb3B0aW9uYWw6IFsnY2hlc3QnLCAnZGVzaycsICdjaGFpcicsICdmaXJlcGxhY2UnLCAncGFpbnRpbmcnLCAncnVnJ10gfSwKICAiRG9sZ296w7Nzem9iYSI6ICAgICAgeyBjb3JlOiBbJ2Rlc2snLCAnY2hhaXInLCAnYm9va2Nhc2UnXSwgb3B0aW9uYWw6IFsnYm9va2Nhc2UnLCAnZmlyZXBsYWNlJywgJ3BhaW50aW5nJywgJ3J1ZyddIH0sCiAgIlN6YWxvbiI6ICAgICAgICAgICAgeyBjb3JlOiBbJ2ZpcmVwbGFjZScsICd0YWJsZSddLCBvcHRpb25hbDogWydjaGFpcicsICdjaGFpcicsICdjaGFpcicsICdwYWludGluZycsICdydWcnLCAncGxhbnQnXSB9LAogICJLw6lwdMOhciI6ICAgICAgICAgICAgeyBjb3JlOiBbJ3BhaW50aW5nJywgJ3BhaW50aW5nJywgJ3BhaW50aW5nJ10sIG9wdGlvbmFsOiBbJ3N0YXR1ZScsICdzdGF0dWUnLCAnY2hhaXInLCAncnVnJ10gfSwKICAiQ3NlbMOpZHN6b2JhIjogICAgICAgeyBjb3JlOiBbJ2J1bmsnLCAnYnVuayddLCBvcHRpb25hbDogWydjaGVzdCcsICd3YXJkcm9iZSddIH0sCiAgIkJvcm9zcGluY2UiOiAgICAgICAgeyBjb3JlOiBbJ2JhcnJlbCcsICdiYXJyZWwnLCAnYmFycmVsJywgJ2JhcnJlbCddLCBvcHRpb25hbDogWydzaGVsZicsICdzaGVsZiddIH0sCiAgIkvDoXBvbG5hIjogICAgICAgICAgIHsgY29yZTogWydhbHRhcicsICdzdGF0dWUnXSwgb3B0aW9uYWw6IFsnY2hhaXInLCAnY2hhaXInLCAnY2hhaXInLCAncGFpbnRpbmcnXSB9LAogICJLZXJ0IjogICAgICAgICAgICAgIHsgY29yZTogWydwbGFudCcsICdwbGFudCcsICdwbGFudCddLCBvcHRpb25hbDogWydzdGF0dWUnLCAncGxhbnQnXSB9LAogICJHYXJkcsOzYiI6ICAgICAgICAgICB7IGNvcmU6IFsnd2FyZHJvYmUnLCAnd2FyZHJvYmUnXSwgb3B0aW9uYWw6IFsnY2hlc3QnLCAnY2hlc3QnLCAnc2hlbGYnXSB9LAoKICAvLyAtLS0gVGVtcGxvbSAtLS0KICAiRsWRc3plbnTDqWx5IjogICAgICAgIHsgY29yZTogWydhbHRhcicsICdzdGF0dWUnLCAnc3RhdHVlJ10sIG9wdGlvbmFsOiBbJ2NoYWlyJywgJ2NoYWlyJywgJ2NoYWlyJywgJ2NoYWlyJywgJ3J1ZyddIH0sCiAgIk9sdMOhciI6ICAgICAgICAgICAgIHsgY29yZTogWydhbHRhciddLCBvcHRpb25hbDogWydzdGF0dWUnLCAnc3RhdHVlJ10gfSwKICAiUGFwaSBDZWxsYSI6ICAgICAgICB7IGNvcmU6IFsnYmVkJywgJ25pZ2h0c3RhbmQnLCAnZGVzaycsICdjaGFpciddLCBvcHRpb25hbDogWydzaGVsZicsICdib29rY2FzZSddIH0sCiAgIk1lZGl0w6FjacOzcyBTem9iYSI6ICB7IGNvcmU6IFsnc3RhdHVlJywgJ3J1ZyddLCBvcHRpb25hbDogWydhbHRhcicsICdwbGFudCddIH0sCiAgIkVyZWtseWV0w6FyIjogICAgICAgIHsgY29yZTogWydjaGVzdCcsICdjaGVzdCcsICdhbHRhciddLCBvcHRpb25hbDogWydzdGF0dWUnLCAnc2hlbGYnXSB9LAogICJLcmlwdGF0w6lyIjogICAgICAgICB7IGNvcmU6IFsnYWx0YXInLCAnY29mZmluJywgJ2NvZmZpbicsICdjb2ZmaW4nXSwgb3B0aW9uYWw6IFsnY29mZmluJywgJ3N0YXR1ZSddIH0sCiAgIkd5w7NudGF0w7NzesOpayI6ICAgICAgeyBjb3JlOiBbJ2NoYWlyJywgJ2NoYWlyJ10sIG9wdGlvbmFsOiBbJ3BhaW50aW5nJ10gfSwKICAiS29ueWhha2VydCI6ICAgICAgICB7IGNvcmU6IFsncGxhbnQnLCAncGxhbnQnLCAnd2VsbCddLCBvcHRpb25hbDogWydiYXJyZWwnLCAnc2hlbGYnXSB9LAogICJIYXJhbmd0b3JvbnkiOiAgICAgIHsgY29yZTogWydydWJibGUnXSwgb3B0aW9uYWw6IFsnc2FjayddIH0sCiAgIkthdGFrb21iw6FrIjogICAgICAgIHsgY29yZTogWydjb2ZmaW4nLCAnY29mZmluJywgJ2NvZmZpbiddLCBvcHRpb25hbDogWydydWJibGUnXSB9LAogICJSaXR1w6FsaXMgTWVkZW5jZSI6ICB7IGNvcmU6IFsnYWx0YXInLCAnY2F1bGRyb24nXSwgb3B0aW9uYWw6IFsnc3RhdHVlJ10gfSwKCiAgLy8gLS0tIFRvcm9ueSAtLS0KICAiTGFib3JhdMOzcml1bSI6ICAgICAgeyBjb3JlOiBbJ2Rlc2snLCAnY2F1bGRyb24nLCAnc2hlbGYnXSwgb3B0aW9uYWw6IFsnc2hlbGYnLCAnYm9va2Nhc2UnLCAnY3J5c3RhbCddIH0sCiAgIkFsa8OtbWlhIFN6b2JhIjogICAgIHsgY29yZTogWydjYXVsZHJvbicsICdjYXVsZHJvbicsICdkZXNrJ10sIG9wdGlvbmFsOiBbJ3NoZWxmJywgJ3NoZWxmJywgJ2NyeXN0YWwnXSB9LAogICJDc2lsbGFndml6c2fDoWzDsyI6ICAgeyBjb3JlOiBbJ2NyeXN0YWwnLCAnZGVzaycsICdjaGFpciddLCBvcHRpb25hbDogWydib29rY2FzZSddIH0sCiAgIklkw6l6xZFrYW1yYSI6ICAgICAgICB7IGNvcmU6IFsnYWx0YXInLCAnY3J5c3RhbCddLCBvcHRpb25hbDogWydzdGF0dWUnLCAncnVnJ10gfSwKICAiRmFtaWxpw6FyaXMgU3pvYmEiOiAgeyBjb3JlOiBbJ2NlbGwnLCAnY2VsbCddLCBvcHRpb25hbDogWydzaGVsZicsICdjaGVzdCddIH0sCiAgIktvbXBvbmVucyBSYWt0w6FyIjogIHsgY29yZTogWydzaGVsZicsICdzaGVsZicsICdzaGVsZicsICdzaGVsZiddLCBvcHRpb25hbDogWydjaGVzdCcsICdiYXJyZWwnXSB9LAogICJQb3J0w6FsIFN6b2JhIjogICAgICB7IGNvcmU6IFsnY3J5c3RhbCcsICdjcnlzdGFsJywgJ2FsdGFyJ10sIG9wdGlvbmFsOiBbJ3J1ZyddIH0sCiAgIk1lZGl0w6FjacOzcyBLYW1yYSI6ICB7IGNvcmU6IFsnc3RhdHVlJywgJ3J1ZyddLCBvcHRpb25hbDogWydjcnlzdGFsJ10gfSwKICAiS3Jpc3TDoWx5a2FtcmEiOiAgICAgeyBjb3JlOiBbJ2NyeXN0YWwnLCAnY3J5c3RhbCcsICdjcnlzdGFsJ10sIG9wdGlvbmFsOiBbJ2NyeXN0YWwnLCAnYWx0YXInXSB9LAoKICAvLyAtLS0gUm9tb2sgLS0tCiAgIsOWc3N6ZWTFkWx0IENzYXJub2siOiAgICAgICAgIHsgY29yZTogWydydWJibGUnLCAncnViYmxlJ10sIG9wdGlvbmFsOiBbJ3J1YmJsZScsICdzdGF0dWUnXSB9LAogICJCZW7FkXR0IFVkdmFyIjogICAgICAgICAgICAgIHsgY29yZTogWydwbGFudCcsICdwbGFudCddLCBvcHRpb25hbDogWydydWJibGUnLCAnc3RhdHVlJywgJ3BsYW50J10gfSwKICAiUm9tb3MgVG9yb255IjogICAgICAgICAgICAgIHsgY29yZTogWydydWJibGUnLCAncnViYmxlJ10sIG9wdGlvbmFsOiBbJ3J1YmJsZSddIH0sCiAgIlLDqXN6YmVuIMOJcGVuIE1hcmFkdCBTem9iYSI6IHsgY29yZTogWydydWJibGUnXSwgb3B0aW9uYWw6IFsndGFibGUnLCAnY2hhaXInLCAnY2hlc3QnXSB9LAogICJGw7ZsZGFsYXR0aSBKw6FyYXQiOiAgICAgICAgICB7IGNvcmU6IFsncnViYmxlJ10sIG9wdGlvbmFsOiBbJ3J1YmJsZSddIH0sCiAgIk9tbGFkb3rDsyBMw6lwY3PFkWjDoXoiOiAgICAgICAgeyBjb3JlOiBbJ3J1YmJsZSddLCBvcHRpb25hbDogWydydWJibGUnXSB9LAogICJSw6lnaSBLcmlwdGEiOiAgICAgICAgICAgICAgIHsgY29yZTogWydjb2ZmaW4nLCAnY29mZmluJ10sIG9wdGlvbmFsOiBbJ3J1YmJsZScsICdzdGF0dWUnXSB9LAogICJFbHRlbWV0ZXR0IEthbXJhIjogICAgICAgICAgeyBjb3JlOiBbJ2NoZXN0J10sIG9wdGlvbmFsOiBbJ3J1YmJsZScsICdjb2ZmaW4nXSB9LAoKICAvLyAtLS0gVG9sdmFqIC0tLQogICJUZXJlbSI6ICAgICAgICAgICAgICAgeyBjb3JlOiBbJ3RhYmxlJywgJ2ZpcmVwbGFjZSddLCBvcHRpb25hbDogWydjaGFpcicsICdjaGFpcicsICdjaGFpcicsICdjaGFpciddIH0sCiAgIlJlanRla2hlbHkiOiAgICAgICAgICB7IGNvcmU6IFsnYnVuaycsICdidW5rJ10sIG9wdGlvbmFsOiBbJ2NoZXN0JywgJ3NoZWxmJ10gfSwKICAiWnPDoWttw6FueWthbXJhIjogICAgICAgeyBjb3JlOiBbJ2NoZXN0JywgJ2NoZXN0JywgJ2NoZXN0J10sIG9wdGlvbmFsOiBbJ2NoZXN0JywgJ3NoZWxmJywgJ3NhY2snXSB9LAogICJTesO2dmV0a2V6ZXRpIFRlcmVtIjogIHsgY29yZTogWydsb25ndGFibGUnLCAnZmlyZXBsYWNlJ10sIG9wdGlvbmFsOiBbJ2NoYWlyJywgJ2NoYWlyJywgJ2NoYWlyJywgJ2NoYWlyJywgJ2NoYWlyJ10gfSwKICAiS2lrw6lwesWRc3pvYmEiOiAgICAgICAgeyBjb3JlOiBbJ3dlYXBvbicsICd3ZWFwb24nXSwgb3B0aW9uYWw6IFsnd2VhcG9uJywgJ3N0YXR1ZSddIH0sCiAgIsOBbGPDoXrDsyBTem9iYSI6ICAgICAgICB7IGNvcmU6IFsnd2FyZHJvYmUnLCAnd2FyZHJvYmUnXSwgb3B0aW9uYWw6IFsnc2hlbGYnLCAnY2hlc3QnXSB9LAogICLFkHJoZWx5IjogICAgICAgICAgICAgIHsgY29yZTogWyd0YWJsZScsICd3ZWFwb24nXSwgb3B0aW9uYWw6IFsnY2hhaXInLCAnY2hhaXInXSB9LAogICJUaXRrb3MgS2lqw6FyYXQiOiAgICAgIHsgY29yZTogWydzaGVsZiddLCBvcHRpb25hbDogWydydWJibGUnLCAnc2FjayddIH0sCn07CgovLyA9PT09PT09PT09PT0gQURBVE9LID09PT09PT09PT09PQovLyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci8vIFNaT0JBIFNaQULDgUxZT0sKLy8gTWluZGVuIHN6b2JhIGVneSBvYmpla3R1bToKLy8gICBuYW1lICAgICAgICAtIG1lZ2plbGVuw610ZW5kxZEgbsOpdgovLyAgIGZsb29ycyAgICAgIC0gbWVseWlrIHN6aW50ZWtlbiBsZWhldCAoJ2Jhc2VtZW50JywnZ3JvdW5kJywndXBwZXInLCd0b3AnLCdhbnknKQovLyAgICAgICAgICAgICAgICAgJ2Jhc2VtZW50JyA9IGxlZ2Fsc8OzIHN6aW50Ci8vICAgICAgICAgICAgICAgICAnZ3JvdW5kJyAgID0gZsO2bGRzemludCAoaGEgbmluY3MgYmFzZW1lbnQsIGFra29yIGEgMC4gc3ppbnQpCi8vICAgICAgICAgICAgICAgICAndXBwZXInICAgID0ga8O2emJlbnPFkSBlbWVsZXRlayAoMS4gw6lzIGFmZWxldHQsIGRlIG5lbSBhIHRvcCkKLy8gICAgICAgICAgICAgICAgICd0b3AnICAgICAgPSBsZWdmZWxzxZEgZW1lbGV0Ci8vICAgICAgICAgICAgICAgICAnYW55JyAgICAgID0gYsOhcmhvbAovLyAgIG1heCAgICAgICAgIC0gaMOhbnkgcMOpbGTDoW55IGxlaGV0IGF6IMOJUMOcTEVUQkVOIMO2c3N6ZXNlbiAoZGVmYXVsdDogdsOpZ3RlbGVuKQovLyAgIG1heFBlckZsb29yIC0gaMOhbnkgcMOpbGTDoW55IGxlaGV0IGVneSBTWklOVEVOIChkZWZhdWx0OiB2w6lndGVsZW4pCi8vICAgd2VpZ2h0ICAgICAgLSByZWxhdMOtdiBneWFrb3Jpc8OhZyAoZGVmYXVsdCAxOyBtaW7DqWwgbWFnYXNhYmIsIGFubsOhbCB0w7ZiYnN6w7ZyIGrDtm4pCi8vICAgcG9zaXRpb24gICAgLSAnZWRnZScgKGNzYWsga8O8bHPFkSBzesOpbGVrZW4pLCAnY29ybmVyJyAoc2Fyb2tiYW4pLCAnY2VudGVyJyAoa8O2esOpcGVuKSwgJ2FueScKLy8gICBwcmlvcml0eSAgICAtIHRydWUgZXNldMOpbiBNSU5ERU5Lw4lQUCBiZWxla2Vyw7xsIGVneSBww6lsZMOhbnkgKGhhIGEgZmVsdMOpdGVsIHRlbGplc8O8bCkKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQoKY29uc3QgQlVJTERJTkdfREFUQSA9IHsKICB0YXZlcm46IHsKICAgIHRpdGxlczogWyJBIFLDqXN6ZWcgU8OhcmvDoW55IiwgIkF6IEFyYW55IEt1cGEiLCAiQSBIw6Fyb20gVMO2bGd5IiwgIkEgRsOhcmFkdCBWw6FuZG9yIiwgIkEgVsO2csO2cyBPcm9zemzDoW4iLCAiQSBIYWJsZcOhbnkgw4luZWtlIl0sCiAgICByb29tczogWwogICAgICB7IG5hbWU6ICJTw7ZudMOpcyIsIGZsb29yczogWydncm91bmQnXSwgbWF4OiAxLCBwcmlvcml0eTogdHJ1ZSwgd2VpZ2h0OiAzIH0sCiAgICAgIHsgbmFtZTogIkvDtnrDtnMgVGVyZW0iLCBmbG9vcnM6IFsnZ3JvdW5kJ10sIG1heDogMSwgcHJpb3JpdHk6IHRydWUsIHdlaWdodDogMiB9LAogICAgICB7IG5hbWU6ICJLb255aGEiLCBmbG9vcnM6IFsnZ3JvdW5kJ10sIG1heDogMSwgcHJpb3JpdHk6IHRydWUsIHdlaWdodDogMiB9LAogICAgICB7IG5hbWU6ICJLYW1yYSIsIGZsb29yczogWydncm91bmQnLCdiYXNlbWVudCddLCBtYXg6IDIsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJWZW5kw6lnc3pvYmEiLCBmbG9vcnM6IFsndXBwZXInLCd0b3AnXSwgd2VpZ2h0OiA1IH0sCiAgICAgIHsgbmFtZTogIklzdMOhbGzDsyIsIGZsb29yczogWydncm91bmQnXSwgbWF4OiAxLCBwb3NpdGlvbjogJ2VkZ2UnLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiUGluY2UiLCBmbG9vcnM6IFsnYmFzZW1lbnQnXSwgbWF4OiAxLCB3ZWlnaHQ6IDIgfSwKICAgICAgeyBuYW1lOiAiVHVsYWpkb25vcyBTem9iw6FqYSIsIGZsb29yczogWyd0b3AnLCd1cHBlciddLCBtYXg6IDEsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJNb3Nkw7MiLCBmbG9vcnM6IFsnYW55J10sIG1heFBlckZsb29yOiAxLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiUmFrdMOhciIsIGZsb29yczogWydncm91bmQnLCdiYXNlbWVudCddLCBtYXg6IDIsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJLw6FydHlhc3pvYmEiLCBmbG9vcnM6IFsnZ3JvdW5kJywndXBwZXInXSwgbWF4OiAxLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiTWFnw6FuIMOJdGtlesWRIiwgZmxvb3JzOiBbJ2dyb3VuZCcsJ3VwcGVyJ10sIG1heDogMSwgd2VpZ2h0OiAxIH0sCiAgICBdLAogICAgY3JlYXR1cmVzOiBbIlLDqXN6ZWcga2FsYW5kb3IiLCAiWnNlYnRvbHZhaiIsICJLb2NzbWFpIHZlcmVrZWTFkSIsICJCw6lyZ3lpbGtvcyIsICJLw6lta2VkxZEgcGF0a8OhbnkiXSwKICAgIGxvb3Q6IFsiRXJzesOpbnkgMmQxMCBlesO8c3R0ZWwiLCAiSsOzIGJvciBwYWxhY2sgKDUgZ3ApIiwgIkVsdmVzemV0dCB0w6lya8OpcCIsICJFesO8c3Qga2Fuw6FsIGvDqXN6bGV0IiwgIlRpdGtvcyDDvHplbmV0Il0sCiAgICB0cmFwczogWyJDc8O6c3rDs3MgcGFkbMOzIiwgIkd5ZW5nZSBsw6lwY3PFkWZvayIsICJFbGR1Z290dCBtw6lyZWciXQogIH0sCiAgZHVuZ2VvbjogewogICAgdGl0bGVzOiBbIkEgTcOpbHlzw6lnIENzYXJub2thIiwgIkEgQ3NvbnR2w6F6YWsgU8OtcmphIiwgIkEgRmVsZWRldHQgS3JpcHRhIiwgIkEgVsOpcnrFkSBLw7Z2ZWsiLCAiSGFsw6FsIEthcHVqYSJdLAogICAgcm9vbXM6IFsKICAgICAgeyBuYW1lOiAiQsO2cnTDtm5jZWxsYSIsIGZsb29yczogWydhbnknXSwgd2VpZ2h0OiA0IH0sCiAgICAgIHsgbmFtZTogIkvDrW56w7NrYW1yYSIsIGZsb29yczogWydhbnknXSwgbWF4OiAyLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAixZByc3pvYmEiLCBmbG9vcnM6IFsnZ3JvdW5kJywndXBwZXInXSwgbWF4UGVyRmxvb3I6IDIsIHdlaWdodDogMiB9LAogICAgICB7IG5hbWU6ICJQb3Jrb2zDoWIgU3pvYsOhamEiLCBmbG9vcnM6IFsnZ3JvdW5kJ10sIG1heDogMSwgd2VpZ2h0OiAxIH0sCiAgICAgIHsgbmFtZTogIkZlZ3l2ZXJyYWt0w6FyIiwgZmxvb3JzOiBbJ2dyb3VuZCcsJ3VwcGVyJ10sIG1heDogMiwgd2VpZ2h0OiAxIH0sCiAgICAgIHsgbmFtZTogIkh1bGxha2FtcmEiLCBmbG9vcnM6IFsnYmFzZW1lbnQnLCdncm91bmQnXSwgbWF4OiAxLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiS3JpcHRhIiwgZmxvb3JzOiBbJ2Jhc2VtZW50J10sIHdlaWdodDogMiB9LAogICAgICB7IG5hbWU6ICJSaXR1w6FsaXMgU3plbnTDqWx5IiwgZmxvb3JzOiBbJ2Jhc2VtZW50JywndG9wJ10sIG1heDogMSwgd2VpZ2h0OiAxIH0sCiAgICAgIHsgbmFtZTogIlRpdGtvcyDDgXRqw6Fyw7MiLCBmbG9vcnM6IFsnYW55J10sIG1heFBlckZsb29yOiAxLCBwb3NpdGlvbjogJ2Nvcm5lcicsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJGw7ZsZGFsYXR0aSBGb2x5w7MiLCBmbG9vcnM6IFsnYmFzZW1lbnQnXSwgbWF4OiAxLCBwb3NpdGlvbjogJ2VkZ2UnLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiQ3NvbnRrYW1yYSIsIGZsb29yczogWydiYXNlbWVudCcsJ2dyb3VuZCddLCBtYXg6IDIsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJLaW5jc2VzIFN6b2JhIiwgZmxvb3JzOiBbJ2Jhc2VtZW50JywndG9wJ10sIG1heDogMSwgcG9zaXRpb246ICdjZW50ZXInLCB3ZWlnaHQ6IDEgfSwKICAgIF0sCiAgICBjcmVhdHVyZXM6IFsiQ3NvbnR2w6F6IGhhcmNvcyAoMmQ0KSIsICJab21iaSAoMWQ2KSIsICLDk3Jpw6FzIHBhdGvDoW55ICgxZDgpIiwgIkdvYmxpbiBjc2FwYXQiLCAiR2hvdWwiLCAiw4FybnnDqWsiLCAiV2lnaHQiLCAiTWltaWMiXSwKICAgIGxvb3Q6IFsixZBzaSBhcmFuecOpcm3DqWsgKDNkMjApIiwgIk3DoWdpa3VzIGd5xbFyxbEiLCAiUGVyZ2FtZW50ZWtlcmNzIiwgIsOJa2vDtnZlayAoMTAwIGdwKSIsICJWYXLDoXpzZmVneXZlciIsICJUaXRrb3MgYWp0w7Mga3VsY3NhIl0sCiAgICB0cmFwczogWyJTemVnZXNnw7Zkw7ZyICgyZDEwIHNlYi4pIiwgIk3DqXJnZXpldHQgdMWxIiwgIkxlesOhcsOzZMOzIGFqdMOzIiwgIlTFsXpsYWJkYSBjc2FwZGEiLCAiTGVvbWzDsyBtZW5ueWV6ZXQiLCAiU2F2YXMgcGVybWV0Il0KICB9LAogIG1hbnNpb246IHsKICAgIHRpdGxlczogWyJSYXZlbmNyZXN0IEvDunJpYSIsICJFesO8c3R2w7ZsZ3kgQmlydG9rIiwgIkEgSG9sbMOzaMOheiIsICJIYWRyacOhbiBQYWxvdMOhamEiLCAiQXogw5ZyZWcgQmxhY2t3b29kIEjDoXoiXSwKICAgIHJvb21zOiBbCiAgICAgIHsgbmFtZTogIkLDoWx0ZXJlbSIsIGZsb29yczogWydncm91bmQnXSwgbWF4OiAxLCBwcmlvcml0eTogdHJ1ZSwgcG9zaXRpb246ICdjZW50ZXInLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiS8O2bnl2dMOhciIsIGZsb29yczogWydncm91bmQnLCd1cHBlciddLCBtYXg6IDEsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICLDiXRrZXrFkSIsIGZsb29yczogWydncm91bmQnXSwgbWF4OiAxLCBwcmlvcml0eTogdHJ1ZSwgd2VpZ2h0OiAyIH0sCiAgICAgIHsgbmFtZTogIkjDoWzDs3N6b2JhIiwgZmxvb3JzOiBbJ3VwcGVyJywndG9wJ10sIHdlaWdodDogNCB9LAogICAgICB7IG5hbWU6ICJEb2xnb3rDs3N6b2JhIiwgZmxvb3JzOiBbJ2dyb3VuZCcsJ3VwcGVyJ10sIG1heDogMiwgd2VpZ2h0OiAxIH0sCiAgICAgIHsgbmFtZTogIlN6YWxvbiIsIGZsb29yczogWydncm91bmQnXSwgbWF4OiAyLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiS8OpcHTDoXIiLCBmbG9vcnM6IFsnZ3JvdW5kJywndXBwZXInXSwgbWF4OiAxLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiVmVuZMOpZ3N6b2JhIiwgZmxvb3JzOiBbJ3VwcGVyJ10sIHdlaWdodDogMiB9LAogICAgICB7IG5hbWU6ICJDc2Vsw6lkc3pvYmEiLCBmbG9vcnM6IFsndG9wJywnYmFzZW1lbnQnXSwgd2VpZ2h0OiAyIH0sCiAgICAgIHsgbmFtZTogIktvbnloYSIsIGZsb29yczogWydncm91bmQnXSwgbWF4OiAxLCBwcmlvcml0eTogdHJ1ZSwgd2VpZ2h0OiAxIH0sCiAgICAgIHsgbmFtZTogIkJvcm9zcGluY2UiLCBmbG9vcnM6IFsnYmFzZW1lbnQnXSwgbWF4OiAxLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiS8OhcG9sbmEiLCBmbG9vcnM6IFsnZ3JvdW5kJywndXBwZXInXSwgbWF4OiAxLCBwb3NpdGlvbjogJ2VkZ2UnLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiS2VydCIsIGZsb29yczogWydncm91bmQnXSwgbWF4OiAxLCBwb3NpdGlvbjogJ2VkZ2UnLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiR2FyZHLDs2IiLCBmbG9vcnM6IFsndXBwZXInLCd0b3AnXSwgbWF4UGVyRmxvb3I6IDIsIHdlaWdodDogMSB9LAogICAgXSwKICAgIGNyZWF0dXJlczogWyJTemVsbGVtIiwgIlBvbHRlcmdlaXN0IiwgIsWQcsO8bHQgbmVtZXMiLCAiSW50cmlrw6Fsw7Mgc3pvbGdhIiwgIkvDrXPDqXJ0ZXRpZXMgY3NlbMOpZCJdLAogICAgbG9vdDogWyJDc2Fsw6FkaSDDqWtzemVyICg1MDAgZ3ApIiwgIsWQc2kgZmVzdG3DqW55IiwgIlRpdGtvcyB2w6lncmVuZGVsZXQiLCAiQXJhbnkgw6l0a8Opc3psZXQiLCAiUml0a2Ega8O2bnl2IiwgIkLFsXbDtnMgYW11bGV0dCJdLAogICAgdHJhcHM6IFsiQ3NhcMOzYWp0w7MgYSBwaW5jw6liZSIsICLDgXRrb3pvdHQgdMO8a8O2ciIsICJIYW1pcyBwYWRsw7MiLCAiTcOpcmdlemV0dCB0xbEgYSBmacOza2JhbiJdCiAgfSwKICB0ZW1wbGU6IHsKICAgIHRpdGxlczogWyJQZWxvciBTemVudMOpbHllIiwgIkF6IEVsdmVzemV0dCBJc3RlbmVrIFRlbXBsb21hIiwgIkEgTsOpbWEgQ3PDtm5kIEtvbG9zdG9yYSIsICJBIFRpc3p0YSBGw6lueSBIw6F6YSJdLAogICAgcm9vbXM6IFsKICAgICAgeyBuYW1lOiAiRsWRc3plbnTDqWx5IiwgZmxvb3JzOiBbJ2dyb3VuZCddLCBtYXg6IDEsIHByaW9yaXR5OiB0cnVlLCBwb3NpdGlvbjogJ2NlbnRlcicsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJPbHTDoXIiLCBmbG9vcnM6IFsnZ3JvdW5kJ10sIG1heDogMSwgcHJpb3JpdHk6IHRydWUsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJQYXBpIENlbGxhIiwgZmxvb3JzOiBbJ3VwcGVyJywndG9wJ10sIHdlaWdodDogMyB9LAogICAgICB7IG5hbWU6ICJNZWRpdMOhY2nDs3MgU3pvYmEiLCBmbG9vcnM6IFsndXBwZXInLCd0b3AnXSwgbWF4OiAzLCB3ZWlnaHQ6IDIgfSwKICAgICAgeyBuYW1lOiAiS8O2bnl2dMOhciIsIGZsb29yczogWydncm91bmQnLCd1cHBlciddLCBtYXg6IDEsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJFcmVrbHlldMOhciIsIGZsb29yczogWydiYXNlbWVudCcsJ3RvcCddLCBtYXg6IDEsIHBvc2l0aW9uOiAnY2VudGVyJywgd2VpZ2h0OiAxIH0sCiAgICAgIHsgbmFtZTogIktyaXB0YXTDqXIiLCBmbG9vcnM6IFsnYmFzZW1lbnQnXSwgbWF4OiAyLCB3ZWlnaHQ6IDIgfSwKICAgICAgeyBuYW1lOiAiR3nDs250YXTDs3N6w6lrIiwgZmxvb3JzOiBbJ2dyb3VuZCddLCBtYXg6IDIsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJLb255aGFrZXJ0IiwgZmxvb3JzOiBbJ2dyb3VuZCddLCBtYXg6IDEsIHBvc2l0aW9uOiAnZWRnZScsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJIYXJhbmd0b3JvbnkiLCBmbG9vcnM6IFsndG9wJ10sIG1heDogMSwgcG9zaXRpb246ICdjb3JuZXInLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiS2F0YWtvbWLDoWsiLCBmbG9vcnM6IFsnYmFzZW1lbnQnXSwgd2VpZ2h0OiAyIH0sCiAgICAgIHsgbmFtZTogIlJpdHXDoWxpcyBNZWRlbmNlIiwgZmxvb3JzOiBbJ2Jhc2VtZW50JywnZ3JvdW5kJ10sIG1heDogMSwgd2VpZ2h0OiAxIH0sCiAgICBdLAogICAgY3JlYXR1cmVzOiBbIkVsdMOpdmVkdCB6YXLDoW5kb2siLCAiU8OpcsO8bHQgcGFwIiwgIsWQc2kgxZFyesWRIHN6b2JvciIsICJNZW5ueWVpIGzDqW55IiwgIkVyZXRuZWsga3VsdGlzdGEiXSwKICAgIGxvb3Q6IFsiU3plbnQgdsOteiBmbGFza2EiLCAiw4FsZG90dCBmZWd5dmVyIiwgIlRlbXBsb21pIGtlaGVseSAoODAgZ3ApIiwgIkd5w7NnecOtdMOzIGLDoWppdGFsIiwgIlZhbGzDoXNpIGVyZWtseWUiXSwKICAgIHRyYXBzOiBbIlN6ZW50IGplbGvDqXAgY3NhcGRhIiwgIktpc3rDoXJhZMOhcyByaXR1w6Fsw6kiLCAiTsOpbWEgc3pvYmEgdmFyw6F6c2xhdCJdCiAgfSwKICB3aXphcmQ6IHsKICAgIHRpdGxlczogWyJNb3JkZW5rYWluZW4gVG9ybnlhIiwgIkEgU3rDvHJrZSBCw7ZsY3MgT3R0aG9uYSIsICJBIEtyaXN0w6FseXRvcm9ueSIsICJBeiDDlnJ2w6lueSBNYWdhcyJdLAogICAgcm9vbXM6IFsKICAgICAgeyBuYW1lOiAiTGFib3JhdMOzcml1bSIsIGZsb29yczogWydncm91bmQnLCd1cHBlciddLCBtYXg6IDEsIHByaW9yaXR5OiB0cnVlLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiQWxrw61taWEgU3pvYmEiLCBmbG9vcnM6IFsnZ3JvdW5kJywndXBwZXInXSwgbWF4OiAyLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiS8O2bnl2dMOhciIsIGZsb29yczogWydncm91bmQnLCd1cHBlciddLCBtYXg6IDIsIHdlaWdodDogMiB9LAogICAgICB7IG5hbWU6ICJDc2lsbGFndml6c2fDoWzDsyIsIGZsb29yczogWyd0b3AnXSwgbWF4OiAxLCBwcmlvcml0eTogdHJ1ZSwgcG9zaXRpb246ICdjZW50ZXInLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiSWTDqXrFkWthbXJhIiwgZmxvb3JzOiBbJ2Jhc2VtZW50JywndXBwZXInXSwgbWF4OiAxLCBwb3NpdGlvbjogJ2NlbnRlcicsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJGYW1pbGnDoXJpcyBTem9iYSIsIGZsb29yczogWyd1cHBlcicsJ3RvcCddLCBtYXg6IDEsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJLb21wb25lbnMgUmFrdMOhciIsIGZsb29yczogWydiYXNlbWVudCcsJ2dyb3VuZCddLCBtYXg6IDIsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJIw6Fsw7Nzem9iYSIsIGZsb29yczogWyd1cHBlcicsJ3RvcCddLCBtYXg6IDIsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJQb3J0w6FsIFN6b2JhIiwgZmxvb3JzOiBbJ3RvcCcsJ2Jhc2VtZW50J10sIG1heDogMSwgcG9zaXRpb246ICdjZW50ZXInLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiTWVkaXTDoWNpw7NzIEthbXJhIiwgZmxvb3JzOiBbJ3RvcCcsJ3VwcGVyJ10sIG1heDogMiwgd2VpZ2h0OiAxIH0sCiAgICAgIHsgbmFtZTogIktyaXN0w6FseWthbXJhIiwgZmxvb3JzOiBbJ3RvcCcsJ2Jhc2VtZW50J10sIG1heDogMSwgd2VpZ2h0OiAxIH0sCiAgICBdLAogICAgY3JlYXR1cmVzOiBbIlZhcsOhenNsw7MgZmFtdWx1c2EiLCAiQW5pbcOhbHQgc8O2cHLFsSIsICJIb211bmN1bHVzIiwgIklkw6l6ZXR0IGVsZW1lbnTDoWwiLCAiS8Otc8OpcmxldGkgc3rDtnJueWVjc2tlIl0sCiAgICBsb290OiBbIlZhcsOhenN0ZWtlcmNzICgxZDQpIiwgIlZhcsOhenNww6FsY2EgKDNkNiB0w7ZsdGV0KSIsICJCw6FqaXRhbCBrw6lzemxldCIsICJHcmltb8OhciIsICJLcmlzdMOhbHkgZ8O2bWIiLCAiTcOhZ2lrdXMga29tcG9uZW5zZWsiXSwKICAgIHRyYXBzOiBbIk1hbmEgcm9iYmFuw6FzIiwgIlRlbGVwb3J0IGNzYXBkYSIsICJJZMWResOtdGV0dCB2YXLDoXpzIiwgIsOJbMWRIHLDum5ha8O2ciIsICJNZW50w6FsaXMgdMOhbWFkw6FzIl0KICB9LAogIHJ1aW5zOiB7CiAgICB0aXRsZXM6IFsiQXogRWx2ZXN6ZXR0IFbDoXJvcyBSb21qYWkiLCAiVGh1bGRhbmluIE1hcmFkdsOhbnlhaSIsICJBeiDDlnJlZyBFcsWRZCBSb21qYWkiLCAiQSBTw7xsbHllZHQgVGVtcGxvbSJdLAogICAgcm9vbXM6IFsKICAgICAgeyBuYW1lOiAiw5Zzc3plZMWRbHQgQ3Nhcm5vayIsIGZsb29yczogWydncm91bmQnXSwgbWF4OiAyLCB3ZWlnaHQ6IDIgfSwKICAgICAgeyBuYW1lOiAiQmVuxZF0dCBVZHZhciIsIGZsb29yczogWydncm91bmQnXSwgbWF4OiAxLCBwb3NpdGlvbjogJ2VkZ2UnLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiUm9tb3MgVG9yb255IiwgZmxvb3JzOiBbJ3RvcCcsJ3VwcGVyJ10sIG1heDogMSwgcG9zaXRpb246ICdjb3JuZXInLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiUsOpc3piZW4gw4lwZW4gTWFyYWR0IFN6b2JhIiwgZmxvb3JzOiBbJ2FueSddLCB3ZWlnaHQ6IDMgfSwKICAgICAgeyBuYW1lOiAiRsO2bGRhbGF0dGkgSsOhcmF0IiwgZmxvb3JzOiBbJ2Jhc2VtZW50J10sIG1heDogMiwgd2VpZ2h0OiAyIH0sCiAgICAgIHsgbmFtZTogIk9tbGFkb3rDsyBMw6lwY3PFkWjDoXoiLCBmbG9vcnM6IFsnYW55J10sIG1heFBlckZsb29yOiAxLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiUsOpZ2kgS3JpcHRhIiwgZmxvb3JzOiBbJ2Jhc2VtZW50JywnZ3JvdW5kJ10sIHdlaWdodDogMiB9LAogICAgICB7IG5hbWU6ICJFbHRlbWV0ZXR0IEthbXJhIiwgZmxvb3JzOiBbJ2Jhc2VtZW50J10sIHdlaWdodDogMiB9LAogICAgXSwKICAgIGNyZWF0dXJlczogWyJHb2JsaW4gYmFuZGEiLCAiw5NyacOhcyBww7NrIiwgIkNzb250dsOheiDFkXIiLCAiR8OzbGVtIHTDtnJlZMOpayIsICJWYWQgw6FsbGF0IGbDqXN6ZWsiXSwKICAgIGxvb3Q6IFsiUsOpZ2kgw6lybcOpayAoMmQyMCBncCkiLCAiTWVndmlzZWx0IGZlZ3l2ZXIiLCAixZBzaSB0ZWtlcmNzIiwgIkVsdmVzemV0dCBhbXVsZXR0IiwgIsOJcnTDqWtlcyBrxZFmYXJhZ3bDoW55Il0sCiAgICB0cmFwczogWyJCZW9tbMOzIG1lbm55ZXpldCIsICJTw7xsbHllZHQgcGFkbMOzIiwgIk1lZ21hcmFkdCByw7puYWNzYXBkYSIsICJHeWVuZ2UgaMOtZCJdCiAgfSwKICB0aGlldmVzOiB7CiAgICB0aXRsZXM6IFsiQSBGZWtldGVrw6l6IEd1aWxkIiwgIkF6IMOBcm55w6lrdGVzdHbDqXJpc8OpZyIsICJBIEvDqXMgSMOhemEiLCAiQSBOw6ltYSBVdGNhIl0sCiAgICByb29tczogWwogICAgICB7IG5hbWU6ICJUZXJlbSIsIGZsb29yczogWydncm91bmQnXSwgbWF4OiAxLCBwcmlvcml0eTogdHJ1ZSwgcG9zaXRpb246ICdjZW50ZXInLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiUmVqdGVraGVseSIsIGZsb29yczogWydiYXNlbWVudCcsJ3RvcCddLCB3ZWlnaHQ6IDIgfSwKICAgICAgeyBuYW1lOiAiWnPDoWttw6FueWthbXJhIiwgZmxvb3JzOiBbJ2Jhc2VtZW50J10sIG1heDogMiwgd2VpZ2h0OiAxIH0sCiAgICAgIHsgbmFtZTogIlN6w7Z2ZXRrZXpldGkgVGVyZW0iLCBmbG9vcnM6IFsnZ3JvdW5kJywndXBwZXInXSwgbWF4OiAxLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiS2lrw6lwesWRc3pvYmEiLCBmbG9vcnM6IFsnZ3JvdW5kJywndXBwZXInXSwgbWF4OiAyLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiRmVneXZlcnJha3TDoXIiLCBmbG9vcnM6IFsnYmFzZW1lbnQnLCdncm91bmQnXSwgbWF4OiAxLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiw4FsY8OhesOzIFN6b2JhIiwgZmxvb3JzOiBbJ3VwcGVyJywndG9wJ10sIG1heDogMiwgd2VpZ2h0OiAxIH0sCiAgICAgIHsgbmFtZTogIsWQcmhlbHkiLCBmbG9vcnM6IFsnZ3JvdW5kJywndG9wJ10sIG1heFBlckZsb29yOiAxLCBwb3NpdGlvbjogJ2Nvcm5lcicsIHdlaWdodDogMSB9LAogICAgICB7IG5hbWU6ICJUaXRrb3MgS2lqw6FyYXQiLCBmbG9vcnM6IFsnYmFzZW1lbnQnLCdncm91bmQnXSwgbWF4OiAxLCBwb3NpdGlvbjogJ2VkZ2UnLCB3ZWlnaHQ6IDEgfSwKICAgICAgeyBuYW1lOiAiQsO2cnTDtm5jZWxsYSIsIGZsb29yczogWydiYXNlbWVudCddLCBtYXg6IDMsIHdlaWdodDogMSB9LAogICAgXSwKICAgIGNyZWF0dXJlczogWyJUb2x2YWogKDJkNCkiLCAiQsOpcmd5aWxrb3MiLCAiT3JnYXpkYSIsICLFkHIga3V0eWEiLCAiR3VpbGRtZXN0ZXIgdGVzdMWRcmUiXSwKICAgIGxvb3Q6IFsiTG9wb3R0IMOpa3N6ZXJlayIsICJIYW1pc8OtdG90dCBpcmF0b2siLCAiVG9sdmFqc3plcnN6w6Ftb2siLCAiVGl0a29zIGvDs2Rrw7ZueXYiLCAiRWxsb3BvdHQgbmVtZXNpIHBlY3PDqXQiXSwKICAgIHRyYXBzOiBbIk3DqXJlZ3TFsXMga2lsaW5jcyIsICJSZWp0ZXR0IHN6w6Ftc3plcsOtaiIsICJDc8O6c3rDs3MgcGFkbMOzIiwgIkZpZ3llbG1lenRldMWRIGh1emFsIl0KICB9Cn07Cgpjb25zdCBTSVpFX01BUCA9IHsKICBzbWFsbDogeyBtaW46IDMsIG1heDogNSB9LAogIG1lZGl1bTogeyBtaW46IDUsIG1heDogOCB9LAogIGxhcmdlOiB7IG1pbjogOCwgbWF4OiAxMiB9Cn07Cgpjb25zdCBEQU5HRVJfTUFQID0gewogIHNhZmU6ICAgeyB0cmFwOiAwLjEsIGNyZWF0dXJlOiAwLjE1LCBsb290OiAwLjQgfSwKICBtZWRpdW06IHsgdHJhcDogMC4zLCBjcmVhdHVyZTogMC40LCAgbG9vdDogMC41IH0sCiAgZGVhZGx5OiB7IHRyYXA6IDAuNSwgY3JlYXR1cmU6IDAuNywgIGxvb3Q6IDAuNiB9Cn07Cgpjb25zdCBGTE9PUl9OQU1FUyA9IFsiUGluY2UiLCAiRsO2bGRzemludCIsICIxLiBFbWVsZXQiLCAiMi4gRW1lbGV0IiwgIjMuIEVtZWxldCIsICI0LiBFbWVsZXQiXTsKCi8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KLy8gU1pPQkEgU1pBQsOBTFkgTU9UT1IKLy8gRWxkw7ZudGksIGhvZ3kgZWd5IHN6b2JhIGhvdmEga2Vyw7xsaGV0IGF6IGFkb3R0IHN6aW50ZW4vw6lww7xsZXRiZW4KLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQoKLy8gVmlzc3phYWRqYSBhIHN6aW50ICJ0aXB1c8OhdCIgYW5uYWsgYWxhcGrDoW4sIGhvZ3kgaMOhbnlhZGlrIGF6IMOpcMO8bGV0YmVuCi8vIGhhc0Jhc2VtZW50OiB2YW4tZSBrw7xsw7ZuIFBpbmNlIHN6aW50IChsZWdhbHPDsyk7IGV6dCBtaSBtaW5kaWcgw7pneSB0ZWtpbnRqw7xrLAovLyAgIGhvZ3kgaGEgdmFuIGxlZ2Fsw6FiYiAyIGVtZWxldCDDqXMgYSAwLiBzemludCBsb2dpa2FpbGFnIHBpbmNlIGxlaGV0IOKAlCBERQovLyAgIGF6IFVJLWJhbiBhIHN6aW50ZWsgbWluZGlnIGbDtmxkc3ppbnR0ZWwga2V6ZMWRZG5laywgZXrDqXJ0IGVneXN6ZXLFsXPDrXRldHQ6Ci8vICAgLSAwLiBzemludDogJ2dyb3VuZCcgKGbDtmxkc3ppbnQpCi8vICAgLSB1dG9sc8OzIHN6aW50OiAndG9wJyAobGVnZmVsc8WRKQovLyAgIC0ga8O2emJlbnPFkTogJ3VwcGVyJwovLyAgIC0gYmFzZW1lbnQtZXQgY3NhayBha2tvciBoYXN6bsOhbGp1aywgaGEgYXogw6lww7xsZXQgdMOtcHVzYSBtZWdlbmdlZGkgw6lzCi8vICAgICBrw7xsw7ZuIGvDqXJqw7xrIChkZSBlenQgbW9zdCBuZW0gaGFzem7DoWxqdWs6IGEgbGVnYWxhY3NvbnlhYmIgc3ppbnQKLy8gICAgIGEgJ2dyb3VuZCcgYSBVSS1iYW4pLiBBeiBhbGFnc29yaSBzem9iw6FrIGV6w6lydCBhICdncm91bmQnIHN6aW50cmUKLy8gICAgIG1lbm5laywgYW1pIGtvbnppc3p0ZW5zIMOpcyDDqXJ0aGV0xZEgYSBqw6F0w6lrb3Mgc3rDoW3DoXJhLgovLwovLyAgIEZPTlRPUzogQSBCVUlMRElOR19EQVRBICdiYXNlbWVudCcga3VsY3NhIGEgJ2dyb3VuZCcgc3ppbnRyZSBtYXBwZWzFkWRpawovLyAgIGhhIG5pbmNzIGvDvGzDtm4gcGluY2Ugc3ppbnQuIEVneWV0bGVuIHN6aW50IGVzZXTDqW4gbWluZGVuICd0b3AnIMOpcyAnZ3JvdW5kJyBpcy4KCmZ1bmN0aW9uIGdldEZsb29yVHlwZShmbG9vckluZGV4LCB0b3RhbEZsb29ycykgewogIGNvbnN0IHR5cGVzID0gW107CiAgaWYgKHRvdGFsRmxvb3JzID09PSAxKSB7CiAgICByZXR1cm4gWydncm91bmQnLCAndG9wJywgJ2Jhc2VtZW50JywgJ2FueSddOyAvLyBlZ3llbWVsZXRlcyBow6F6OiBtaW5kZW4gaWRlIGtlcsO8bAogIH0KICBpZiAoZmxvb3JJbmRleCA9PT0gMCkgewogICAgdHlwZXMucHVzaCgnZ3JvdW5kJywgJ2Jhc2VtZW50Jyk7IC8vIGbDtmxkc3ppbnQsIMOpcyBpZGUgasO2bm5layBhICdwaW5jZScgc3pvYsOhayBpcwogIH0gZWxzZSBpZiAoZmxvb3JJbmRleCA9PT0gdG90YWxGbG9vcnMgLSAxKSB7CiAgICB0eXBlcy5wdXNoKCd0b3AnKTsKICAgIGlmIChmbG9vckluZGV4ID49IDEpIHR5cGVzLnB1c2goJ3VwcGVyJyk7IC8vIGEgdG9wIGVneWJlbiB1cHBlciBpcwogIH0gZWxzZSB7CiAgICB0eXBlcy5wdXNoKCd1cHBlcicpOwogIH0KICB0eXBlcy5wdXNoKCdhbnknKTsKICByZXR1cm4gdHlwZXM7Cn0KCi8vIEtvbXBhdGliaWxpcy1lIGEgc3pvYmEgYSBzemludHRlbD8KZnVuY3Rpb24gcm9vbUZpdHNGbG9vcihyb29tRGVmLCBmbG9vckluZGV4LCB0b3RhbEZsb29ycykgewogIGNvbnN0IGZsb29yVHlwZXMgPSBnZXRGbG9vclR5cGUoZmxvb3JJbmRleCwgdG90YWxGbG9vcnMpOwogIHJldHVybiByb29tRGVmLmZsb29ycy5zb21lKGFsbG93ZWQgPT4gZmxvb3JUeXBlcy5pbmNsdWRlcyhhbGxvd2VkKSk7Cn0KCi8vIFPDumx5b3pvdHQgdsOpbGV0bGVuIGtpdsOhbGFzenTDoXMgKGZpZ3llbGVtYmUgdmVzemkgYSBtYXgga29ybMOhdG9rYXQpCmZ1bmN0aW9uIHBpY2tXZWlnaHRlZChjYW5kaWRhdGVzLCBpbnN0YW5jZUNvdW50cywgcGVyRmxvb3JDb3VudHMpIHsKICBjb25zdCB2YWxpZCA9IGNhbmRpZGF0ZXMuZmlsdGVyKGMgPT4gewogICAgY29uc3QgdG90YWxVc2VkID0gaW5zdGFuY2VDb3VudHNbYy5uYW1lXSB8fCAwOwogICAgY29uc3Qgb25GbG9vclVzZWQgPSBwZXJGbG9vckNvdW50c1tjLm5hbWVdIHx8IDA7CiAgICBpZiAoYy5tYXggIT0gbnVsbCAmJiB0b3RhbFVzZWQgPj0gYy5tYXgpIHJldHVybiBmYWxzZTsKICAgIGlmIChjLm1heFBlckZsb29yICE9IG51bGwgJiYgb25GbG9vclVzZWQgPj0gYy5tYXhQZXJGbG9vcikgcmV0dXJuIGZhbHNlOwogICAgcmV0dXJuIHRydWU7CiAgfSk7CiAgaWYgKHZhbGlkLmxlbmd0aCA9PT0gMCkgcmV0dXJuIG51bGw7CiAgY29uc3QgdG90YWxXZWlnaHQgPSB2YWxpZC5yZWR1Y2UoKHMsIGMpID0+IHMgKyAoYy53ZWlnaHQgfHwgMSksIDApOwogIGxldCByID0gTWF0aC5yYW5kb20oKSAqIHRvdGFsV2VpZ2h0OwogIGZvciAoY29uc3QgYyBvZiB2YWxpZCkgewogICAgciAtPSAoYy53ZWlnaHQgfHwgMSk7CiAgICBpZiAociA8PSAwKSByZXR1cm4gYzsKICB9CiAgcmV0dXJuIHZhbGlkW3ZhbGlkLmxlbmd0aCAtIDFdOwp9CgovLyDDlnNzemXDoWxsw610IGVneSBzem9iYS10ZXJ2ZXQgYXogZWfDqXN6IMOpcMO8bGV0cmUKLy8gICBWaXNzemFhZCBlZ3kgdMO2bWLDtnQ6IGZsb29yIGluZGV4IC0+IFtyb29tIGRlZnMgaW4gb3JkZXJdCi8vICAgR2FyYW50w6FsamEgYSAncHJpb3JpdHk6IHRydWUnIHN6b2LDoWthdCAoaGEgaGVseSB2YW4gcsOhanVrKQpmdW5jdGlvbiBwbGFuQnVpbGRpbmdSb29tcyhidWlsZGluZ1R5cGUsIHRvdGFsRmxvb3JzLCByb29tQ291bnRzUGVyRmxvb3IpIHsKICBjb25zdCBkYXRhID0gQlVJTERJTkdfREFUQVtidWlsZGluZ1R5cGVdOwogIGNvbnN0IGFsbFJvb21EZWZzID0gZGF0YS5yb29tczsKICBjb25zdCBwbGFuID0gW107CiAgY29uc3QgaW5zdGFuY2VDb3VudHMgPSB7fTsgLy8gw6lww7xsZXQtc3ppbnTFsQogIGZvciAobGV0IGkgPSAwOyBpIDwgdG90YWxGbG9vcnM7IGkrKykgcGxhbi5wdXNoKFtdKTsKCiAgLy8gMS4gbMOpcMOpczogcHJpb3JpdHkgc3pvYsOhayBsZXJha8Ohc2EgYSBtZWdlbmdlZGV0dCBzemludGVrcmUgKDEtMSBww6lsZMOhbnkpCiAgZm9yIChjb25zdCBkZWYgb2YgYWxsUm9vbURlZnMpIHsKICAgIGlmICghZGVmLnByaW9yaXR5KSBjb250aW51ZTsKICAgIGlmIChpbnN0YW5jZUNvdW50c1tkZWYubmFtZV0gPj0gMSkgY29udGludWU7CiAgICAvLyBtZWdrZXJlc3PDvGsgYXogZWxzxZEgc3ppbnRldCwgYWhvbCBlbGbDqXIgw6lzIGlsbGlrCiAgICBmb3IgKGxldCBmID0gMDsgZiA8IHRvdGFsRmxvb3JzOyBmKyspIHsKICAgICAgaWYgKHBsYW5bZl0ubGVuZ3RoID49IHJvb21Db3VudHNQZXJGbG9vcltmXSkgY29udGludWU7CiAgICAgIGlmIChyb29tRml0c0Zsb29yKGRlZiwgZiwgdG90YWxGbG9vcnMpKSB7CiAgICAgICAgcGxhbltmXS5wdXNoKGRlZik7CiAgICAgICAgaW5zdGFuY2VDb3VudHNbZGVmLm5hbWVdID0gKGluc3RhbmNlQ291bnRzW2RlZi5uYW1lXSB8fCAwKSArIDE7CiAgICAgICAgYnJlYWs7CiAgICAgIH0KICAgIH0KICB9CgogIC8vIDIuIGzDqXDDqXM6IG1pbmRlbiBzemludGV0IGZlbHTDtmx0w7xuayBhIG1lZ2ZlbGVsxZEgc3pvYsOha2thbAogIGZvciAobGV0IGYgPSAwOyBmIDwgdG90YWxGbG9vcnM7IGYrKykgewogICAgY29uc3QgbmVlZCA9IHJvb21Db3VudHNQZXJGbG9vcltmXSAtIHBsYW5bZl0ubGVuZ3RoOwogICAgY29uc3QgcGVyRmxvb3JDb3VudHMgPSB7fTsKICAgIHBsYW5bZl0uZm9yRWFjaChkID0+IHsgcGVyRmxvb3JDb3VudHNbZC5uYW1lXSA9IChwZXJGbG9vckNvdW50c1tkLm5hbWVdIHx8IDApICsgMTsgfSk7CgogICAgY29uc3QgY2FuZGlkYXRlcyA9IGFsbFJvb21EZWZzLmZpbHRlcihkZWYgPT4gcm9vbUZpdHNGbG9vcihkZWYsIGYsIHRvdGFsRmxvb3JzKSk7CiAgICBpZiAoY2FuZGlkYXRlcy5sZW5ndGggPT09IDApIGNvbnRpbnVlOwoKICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbmVlZDsgaSsrKSB7CiAgICAgIGNvbnN0IHBpY2tlZCA9IHBpY2tXZWlnaHRlZChjYW5kaWRhdGVzLCBpbnN0YW5jZUNvdW50cywgcGVyRmxvb3JDb3VudHMpOwogICAgICBpZiAoIXBpY2tlZCkgewogICAgICAgIC8vIGhhIG1pbmRlbiBrb3Jsw6F0IGJldGVsdCwgaGFneWp1ayDDvHJlc2VuIOKAlCBleiB2YWzDs3MgZXNlbcOpbnkgaGEga2ljc2kgYSBzem9iYXbDoWxhc3p0w6lrCiAgICAgICAgLy8gaWx5ZW5rb3IgcmFuZG9tIGVneWV0IHbDoWxhc3p0dW5rIGEga2FuZGlkYXR1c29rYsOzbCBhIG1heCBrb3Jsw6F0b2sgbWVsbMWResOpc8OpdmVsCiAgICAgICAgY29uc3QgZmFsbGJhY2sgPSBjYW5kaWRhdGVzW01hdGguZmxvb3IoTWF0aC5yYW5kb20oKSAqIGNhbmRpZGF0ZXMubGVuZ3RoKV07CiAgICAgICAgcGxhbltmXS5wdXNoKGZhbGxiYWNrKTsKICAgICAgICBpbnN0YW5jZUNvdW50c1tmYWxsYmFjay5uYW1lXSA9IChpbnN0YW5jZUNvdW50c1tmYWxsYmFjay5uYW1lXSB8fCAwKSArIDE7CiAgICAgICAgcGVyRmxvb3JDb3VudHNbZmFsbGJhY2submFtZV0gPSAocGVyRmxvb3JDb3VudHNbZmFsbGJhY2submFtZV0gfHwgMCkgKyAxOwogICAgICB9IGVsc2UgewogICAgICAgIHBsYW5bZl0ucHVzaChwaWNrZWQpOwogICAgICAgIGluc3RhbmNlQ291bnRzW3BpY2tlZC5uYW1lXSA9IChpbnN0YW5jZUNvdW50c1twaWNrZWQubmFtZV0gfHwgMCkgKyAxOwogICAgICAgIHBlckZsb29yQ291bnRzW3BpY2tlZC5uYW1lXSA9IChwZXJGbG9vckNvdW50c1twaWNrZWQubmFtZV0gfHwgMCkgKyAxOwogICAgICB9CiAgICB9CiAgfQoKICAvLyAzLiBsw6lww6lzOiBrZXZlcsOpcyBzemludGVua8OpbnQgaG9neSBhIHByaW9yaXR5IHN6b2LDoWsgbmUgbGVneWVuZWsgbWluZGlnIGF6IGVsZWrDqW4KICBmb3IgKGxldCBmID0gMDsgZiA8IHRvdGFsRmxvb3JzOyBmKyspIHsKICAgIGZvciAobGV0IGkgPSBwbGFuW2ZdLmxlbmd0aCAtIDE7IGkgPiAwOyBpLS0pIHsKICAgICAgY29uc3QgaiA9IE1hdGguZmxvb3IoTWF0aC5yYW5kb20oKSAqIChpICsgMSkpOwogICAgICBbcGxhbltmXVtpXSwgcGxhbltmXVtqXV0gPSBbcGxhbltmXVtqXSwgcGxhbltmXVtpXV07CiAgICB9CiAgfQoKICByZXR1cm4gcGxhbjsKfQoKLy8gVElMRSBUw41QVVNPSwpjb25zdCBUX1dBTEwgPSAwOwpjb25zdCBUX0ZMT09SID0gMTsKY29uc3QgVF9DT1JSSURPUiA9IDI7CmNvbnN0IFRfRE9PUiA9IDM7Cgpjb25zdCByYW5kID0gKG1pbiwgbWF4KSA9PiBNYXRoLmZsb29yKE1hdGgucmFuZG9tKCkgKiAobWF4IC0gbWluICsgMSkpICsgbWluOwpjb25zdCBwaWNrID0gYXJyID0+IGFycltNYXRoLmZsb29yKE1hdGgucmFuZG9tKCkgKiBhcnIubGVuZ3RoKV07CmNvbnN0IGluQm91bmRzID0gKHgsIHksIGdzKSA9PiB4ID49IDAgJiYgeCA8IGdzICYmIHkgPj0gMCAmJiB5IDwgZ3M7CgpsZXQgY3VycmVudEJ1aWxkaW5nID0gbnVsbDsKbGV0IGFjdGl2ZUZsb29yID0gMDsKCi8vID09PT09PT09PT09PSBGxZAgR0VORVLDgVRPUiA9PT09PT09PT09PT0KZnVuY3Rpb24gZ2VuZXJhdGVCdWlsZGluZygpIHsKICBjb25zdCB0eXBlID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2J1aWxkaW5nVHlwZScpLnZhbHVlOwogIGNvbnN0IG51bUZsb29ycyA9IHBhcnNlSW50KGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdudW1GbG9vcnMnKS52YWx1ZSk7CiAgY29uc3Qgcm9vbXNLZXkgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgncm9vbXNQZXJGbG9vcicpLnZhbHVlOwogIGNvbnN0IGRhbmdlcktleSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdkYW5nZXJMZXZlbCcpLnZhbHVlOwogIGNvbnN0IGdyaWRTaXplID0gcGFyc2VJbnQoZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2dyaWRTaXplJykudmFsdWUpOwoKICBjb25zdCBkYXRhID0gQlVJTERJTkdfREFUQVt0eXBlXTsKICBjb25zdCBzaXplUmFuZ2UgPSBTSVpFX01BUFtyb29tc0tleV07CiAgY29uc3QgZGFuZ2VyID0gREFOR0VSX01BUFtkYW5nZXJLZXldOwoKICAvLyBFbMWRc3rDtnIgZWxkw7ZudGrDvGsgc3ppbnRlbmvDqW50IGjDoW55IHN6b2JhIGxlc3oKICBjb25zdCByb29tQ291bnRzUGVyRmxvb3IgPSBbXTsKICBmb3IgKGxldCBmID0gMDsgZiA8IG51bUZsb29yczsgZisrKSB7CiAgICBsZXQgbnVtUm9vbXMgPSByYW5kKHNpemVSYW5nZS5taW4sIHNpemVSYW5nZS5tYXgpOwogICAgLy8gRm9nYWTDs27DoWwgYSBmZWxzxZFiYiBzemludGVrIHDDoXJvcyB2ZW5kw6lnc3pvYsOha2thbAogICAgaWYgKHR5cGUgPT09ICd0YXZlcm4nICYmIGYgPj0gMSkgewogICAgICBjb25zdCBtYXhCeSA9IGdyaWRTaXplID49IDMwID8gMTAgOiA4OwogICAgICBudW1Sb29tcyA9IHJhbmQoMiwgbWF4QnkgLyAyKSAqIDI7CiAgICAgIGlmIChudW1Sb29tcyA8IDQpIG51bVJvb21zID0gNDsKICAgIH0KICAgIHJvb21Db3VudHNQZXJGbG9vci5wdXNoKG51bVJvb21zKTsKICB9CgogIC8vIE1lZ3RlcnZlenrDvGsgYSB0ZWxqZXMgw6lww7xsZXRldCDigJQgbWluZGVuIHN6b2LDoXQgc3phYsOhbHlvayBzemVyaW50IGhlbHllesO8bmsgZWwKICBjb25zdCBidWlsZGluZ1BsYW4gPSBwbGFuQnVpbGRpbmdSb29tcyh0eXBlLCBudW1GbG9vcnMsIHJvb21Db3VudHNQZXJGbG9vcik7CgogIGNvbnN0IGZsb29ycyA9IFtdOwogIGxldCByb29tSWRDb3VudGVyID0gMTsKCiAgZm9yIChsZXQgZiA9IDA7IGYgPCBudW1GbG9vcnM7IGYrKykgewogICAgY29uc3QgZmxvb3IgPSBnZW5lcmF0ZUZsb29yKGJ1aWxkaW5nUGxhbltmXSwgZ3JpZFNpemUsIGRhdGEsIGRhbmdlciwgZiwgcm9vbUlkQ291bnRlciwgdHlwZSwgbnVtRmxvb3JzKTsKICAgIHJvb21JZENvdW50ZXIgKz0gZmxvb3Iucm9vbXMubGVuZ3RoOwogICAgZmxvb3JzLnB1c2goZmxvb3IpOwogIH0KCiAgY29ubmVjdEZsb29yc1dpdGhTdGFpcnMoZmxvb3JzLCB0eXBlKTsKCiAgY3VycmVudEJ1aWxkaW5nID0geyB0aXRsZTogcGljayhkYXRhLnRpdGxlcyksIGZsb29ycywgZ3JpZFNpemUsIG51bUZsb29ycywgdHlwZSB9OwogIGFjdGl2ZUZsb29yID0gMDsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnbWFwVGl0bGUnKS50ZXh0Q29udGVudCA9IGN1cnJlbnRCdWlsZGluZy50aXRsZTsKICByZW5kZXJGbG9vclRhYnMoKTsKICBkcmF3TWFwKCk7CiAgcmVuZGVyRGV0YWlscygpOwp9CgovLyA9PT09PT09PT09PT0gU1pJTlQgR0VORVLDgUzDgVNBID09PT09PT09PT09PQovLyByb29tUGxhbjogc3pvYmFvYmpla3R1bS10w7ZtYiAobWluZGVuIGVsZW1uZWsgdmFuIG5hbWUsIGZsb29ycywgcG9zaXRpb24sIHN0Yi4pCmZ1bmN0aW9uIGdlbmVyYXRlRmxvb3Iocm9vbVBsYW4sIGdyaWRTaXplLCBkYXRhLCBkYW5nZXIsIGZsb29ySW5kZXgsIHN0YXJ0SWQsIGJ1aWxkaW5nVHlwZSwgdG90YWxGbG9vcnMpIHsKICBjb25zdCBudW1Sb29tcyA9IHJvb21QbGFuLmxlbmd0aDsKICBjb25zdCBncmlkID0gW107CiAgZm9yIChsZXQgeSA9IDA7IHkgPCBncmlkU2l6ZTsgeSsrKSBncmlkLnB1c2gobmV3IEFycmF5KGdyaWRTaXplKS5maWxsKFRfV0FMTCkpOwoKICBjb25zdCByb29tcyA9IFtdOwogIGNvbnN0IHJvb21JZEdyaWQgPSBbXTsKICBmb3IgKGxldCB5ID0gMDsgeSA8IGdyaWRTaXplOyB5KyspIHJvb21JZEdyaWQucHVzaChuZXcgQXJyYXkoZ3JpZFNpemUpLmZpbGwoLTEpKTsKCiAgY29uc3QgbWF4QXR0ZW1wdHMgPSA4MDA7CiAgbGV0IGF0dGVtcHRzID0gMDsKICBsZXQgY3VycmVudElkID0gc3RhcnRJZDsKCiAgLy8gS2kgbWVseWlrIHN6b2LDoXQga2FwamE6IGEgcm9vbVBsYW4gc29ycmVuZGplLCBkZSBhIHBvesOtY2nDs2lnw6lueWVzZWtldCBlbMWRcmUgdmVzc3rDvGsKICAvLyAobWVydCBuZWhlemViYiDFkWtldCBlbGhlbHllem5pKQogIGNvbnN0IHBvc2l0aW9uUHJpb3JpdHkgPSB7IGNvcm5lcjogMCwgZWRnZTogMSwgY2VudGVyOiAyLCBhbnk6IDMgfTsKICBjb25zdCBzb3J0ZWRQbGFuID0gWy4uLnJvb21QbGFuXS5zb3J0KChhLCBiKSA9PiB7CiAgICBjb25zdCBwYSA9IHBvc2l0aW9uUHJpb3JpdHlbYS5wb3NpdGlvbiB8fCAnYW55J107CiAgICBjb25zdCBwYiA9IHBvc2l0aW9uUHJpb3JpdHlbYi5wb3NpdGlvbiB8fCAnYW55J107CiAgICByZXR1cm4gcGEgLSBwYjsKICB9KTsKCiAgLy8gRWxsZW7FkXJ6aSwgaG9neSBlZ3kgYWRvdHQgcG96w61jacOzIG1lZ2ZlbGVsLWUgZWd5IHN6b2JhICdwb3NpdGlvbicgc3phYsOhbHnDoW5hawogIGZ1bmN0aW9uIHBvc2l0aW9uTWF0Y2hlcyhyb29tRGVmLCB4LCB5LCB3LCBoKSB7CiAgICBjb25zdCBwb3MgPSByb29tRGVmLnBvc2l0aW9uIHx8ICdhbnknOwogICAgaWYgKHBvcyA9PT0gJ2FueScpIHJldHVybiB0cnVlOwogICAgY29uc3QgY3ggPSB4ICsgdyAvIDI7CiAgICBjb25zdCBjeSA9IHkgKyBoIC8gMjsKICAgIGNvbnN0IGNlbnRlciA9IGdyaWRTaXplIC8gMjsKICAgIGNvbnN0IGRpc3RGcm9tQ2VudGVyID0gTWF0aC5tYXgoTWF0aC5hYnMoY3ggLSBjZW50ZXIpLCBNYXRoLmFicyhjeSAtIGNlbnRlcikpOwogICAgY29uc3QgaGFsZkdyaWQgPSBncmlkU2l6ZSAvIDI7CgogICAgaWYgKHBvcyA9PT0gJ2VkZ2UnKSB7CiAgICAgIC8vIGEgc3pvYmEgw6lyaW50c2UgYSB0w6lya8OpcCBrw7xsc8WRIDI1JS3DoXQKICAgICAgcmV0dXJuIHggPD0gNCB8fCB5IDw9IDQgfHwgeCArIHcgPj0gZ3JpZFNpemUgLSA0IHx8IHkgKyBoID49IGdyaWRTaXplIC0gNDsKICAgIH0KICAgIGlmIChwb3MgPT09ICdjb3JuZXInKSB7CiAgICAgIC8vIGEgc3pvYmEgbWluZGvDqXQgdGVuZ2VseSBtZW50w6luIGvDtnplbCBhIHNhcm9raG96CiAgICAgIGNvbnN0IG5lYXJMZWZ0WCA9IHggPD0gNDsKICAgICAgY29uc3QgbmVhclJpZ2h0WCA9IHggKyB3ID49IGdyaWRTaXplIC0gNDsKICAgICAgY29uc3QgbmVhclRvcFkgPSB5IDw9IDQ7CiAgICAgIGNvbnN0IG5lYXJCb3RZID0geSArIGggPj0gZ3JpZFNpemUgLSA0OwogICAgICByZXR1cm4gKG5lYXJMZWZ0WCB8fCBuZWFyUmlnaHRYKSAmJiAobmVhclRvcFkgfHwgbmVhckJvdFkpOwogICAgfQogICAgaWYgKHBvcyA9PT0gJ2NlbnRlcicpIHsKICAgICAgLy8gYSB0w6lya8OpcCBrw7Z6w6lwc8WRIDYwJS3DoWJhbiBsZWd5ZW4gYSBrw7Z6w6lwcG9udGphCiAgICAgIHJldHVybiBkaXN0RnJvbUNlbnRlciA8IGhhbGZHcmlkICogMC41OwogICAgfQogICAgcmV0dXJuIHRydWU7CiAgfQoKICBsZXQgcGxhbkluZGV4ID0gMDsKICB3aGlsZSAocm9vbXMubGVuZ3RoIDwgbnVtUm9vbXMgJiYgYXR0ZW1wdHMgPCBtYXhBdHRlbXB0cykgewogICAgYXR0ZW1wdHMrKzsKICAgIGNvbnN0IHcgPSByYW5kKDQsIDcpOwogICAgY29uc3QgaCA9IHJhbmQoNCwgNyk7CiAgICBjb25zdCB4ID0gcmFuZCgyLCBncmlkU2l6ZSAtIHcgLSAyKTsKICAgIGNvbnN0IHkgPSByYW5kKDIsIGdyaWRTaXplIC0gaCAtIDIpOwoKICAgIC8vIE1lbHlpayB0ZXJ2ZXpldHQgc3pvYmEgcHLDs2LDoWwgYmVqdXRuaSBtb3N0PwogICAgY29uc3QgdGFyZ2V0RGVmID0gc29ydGVkUGxhbltwbGFuSW5kZXhdOwoKICAgIC8vIFBvesOtY2nDsyBtZWdmZWxlbC1lIGEgc3phYsOhbHluYWs/CiAgICAvLyBFTkdFRMOJS0VOWTogYXogZWxzxZEgNjAlIHByw7Niw6Fsa296w6FzaWcgc3ppZ29yw7osIHV0w6FuYSBsYXrDrXR1bmsgaG9neSBuZSByYWdhZGpvbiBiZQogICAgY29uc3Qgc3RyaWN0UGhhc2UgPSBhdHRlbXB0cyA8IG1heEF0dGVtcHRzICogMC42OwogICAgaWYgKHN0cmljdFBoYXNlICYmICFwb3NpdGlvbk1hdGNoZXModGFyZ2V0RGVmLCB4LCB5LCB3LCBoKSkgewogICAgICBjb250aW51ZTsKICAgIH0KCiAgICBsZXQgb3ZlcmxhcCA9IGZhbHNlOwogICAgZm9yIChjb25zdCByIG9mIHJvb21zKSB7CiAgICAgIGlmICh4IDwgci54ICsgci53ICsgMiAmJiB4ICsgdyArIDIgPiByLnggJiYKICAgICAgICAgIHkgPCByLnkgKyByLmggKyAyICYmIHkgKyBoICsgMiA+IHIueSkgewogICAgICAgIG92ZXJsYXAgPSB0cnVlOwogICAgICAgIGJyZWFrOwogICAgICB9CiAgICB9CgogICAgaWYgKCFvdmVybGFwKSB7CiAgICAgIGNvbnN0IGxvY2FsSW5kZXggPSByb29tcy5sZW5ndGg7CiAgICAgIGNvbnN0IHJvb21OYW1lID0gdGFyZ2V0RGVmLm5hbWU7CiAgICAgIGNvbnN0IHJvb20gPSB7CiAgICAgICAgaWQ6IGN1cnJlbnRJZCsrLAogICAgICAgIGxvY2FsSW5kZXgsCiAgICAgICAgeCwgeSwgdywgaCwKICAgICAgICBmbG9vcjogZmxvb3JJbmRleCwKICAgICAgICBuYW1lOiByb29tTmFtZSwKICAgICAgICBjeDogeCArIE1hdGguZmxvb3IodyAvIDIpLAogICAgICAgIGN5OiB5ICsgTWF0aC5mbG9vcihoIC8gMiksCiAgICAgICAgaGFzVHJhcDogTWF0aC5yYW5kb20oKSA8IGRhbmdlci50cmFwLAogICAgICAgIGhhc0NyZWF0dXJlOiBNYXRoLnJhbmRvbSgpIDwgZGFuZ2VyLmNyZWF0dXJlLAogICAgICAgIGhhc0xvb3Q6IE1hdGgucmFuZG9tKCkgPCBkYW5nZXIubG9vdCwKICAgICAgICBkZXNjcmlwdGlvbjogcGljayhbCiAgICAgICAgICAiQSBsZXZlZ8WRdCBwb3Igw6lzIHLDqWdpIGVtbMOpa2VrIHTDtmx0aWsgbWVnLiIsCiAgICAgICAgICAiSGFsdsOhbnkgZsOpbnkgc3rFsXLFkWRpayBiZSBlZ3kga2lzIHLDqXNlbiDDoXQuIiwKICAgICAgICAgICJGdXJjc2Egc3phZyBsZW5naSBiZSBhIHN6b2LDoXQuIiwKICAgICAgICAgICJBIGZhbGFrb24gcmVwZWTDqXNlayDDqXMgbmVkdmVzc8OpZyBueW9tYWkgbMOhdHN6YW5hay4iLAogICAgICAgICAgIkEgY3NlbmQgc3ppbnRlIGbDvGxzaWtldMOtdMWRIGl0dC4iLAogICAgICAgICAgIlDDs2tow6Fsw7NrIGTDrXN6w610aWsgYSBtZW5ueWV6ZXQgc2Fya2FpdC4iLAogICAgICAgICAgIkEgcGFkbMOzbiByw6lnaSBsw6FibnlvbW9rIGzDoXRzemFuYWsgYSBwb3JiYW4uIiwKICAgICAgICAgICJGw6FrbHnDoWsgcGlzbMOha29sbmFrIGEgZmFsYWtvbi4iLAogICAgICAgICAgIkhpZGVnIGh1emF0IHPDvHbDrXQgdmFsYWhvbm5hbi4iCiAgICAgICAgXSksCiAgICAgICAgc3RhaXJzOiBudWxsLAogICAgICB9OwoKICAgICAgaWYgKHJvb20uaGFzVHJhcCkgcm9vbS50cmFwID0gcGljayhkYXRhLnRyYXBzKTsKICAgICAgaWYgKHJvb20uaGFzQ3JlYXR1cmUpIHJvb20uY3JlYXR1cmUgPSBwaWNrKGRhdGEuY3JlYXR1cmVzKTsKICAgICAgaWYgKHJvb20uaGFzTG9vdCkgcm9vbS5sb290ID0gcGljayhkYXRhLmxvb3QpOwoKICAgICAgLy8gcGFkbMOzIGtpamVsw7Zsw6lzZQogICAgICBmb3IgKGxldCBkeSA9IDA7IGR5IDwgaDsgZHkrKykgewogICAgICAgIGZvciAobGV0IGR4ID0gMDsgZHggPCB3OyBkeCsrKSB7CiAgICAgICAgICBncmlkW3kgKyBkeV1beCArIGR4XSA9IFRfRkxPT1I7CiAgICAgICAgICByb29tSWRHcmlkW3kgKyBkeV1beCArIGR4XSA9IGxvY2FsSW5kZXg7CiAgICAgICAgfQogICAgICB9CiAgICAgIHJvb21zLnB1c2gocm9vbSk7CiAgICAgIHBsYW5JbmRleCsrOwogICAgfQogIH0KCiAgLy8gZm9seW9zw7NrIGdlbmVyw6Fsw6FzYSDigJQgR0FSQU5Uw4FMVCDDtnNzemVrw7Z0w6lzCiAgY29ubmVjdEFsbFJvb21zKGdyaWQsIHJvb21JZEdyaWQsIHJvb21zLCBncmlkU2l6ZSk7CgogIC8vIGLDunRvcm9rIGVsaGVseWV6w6lzZSBNSVVUw4FOIGF6IGFqdMOzayBtZWd2YW5uYWssIGhvZ3kgYXpvayBlbMOpIG5lIGtlcsO8bGrDtm4gYsO6dG9yCiAgZm9yIChjb25zdCByb29tIG9mIHJvb21zKSB7CiAgICByb29tLmZ1cm5pdHVyZSA9IHBsYWNlRnVybml0dXJlKHJvb20sIGdyaWQsIGdyaWRTaXplKTsKICB9CgogIHJldHVybiB7IHJvb21zLCBncmlkLCByb29tSWRHcmlkLCBmbG9vckluZGV4IH07Cn0KCi8vID09PT09PT09PT09PSBTWk9Cw4FLIMOWU1NaRUvDllTDiVNFIOKAlCBHQVJBTlTDgUxUID09PT09PT09PT09PQpmdW5jdGlvbiBjb25uZWN0QWxsUm9vbXMoZ3JpZCwgcm9vbUlkR3JpZCwgcm9vbXMsIGdyaWRTaXplKSB7CiAgaWYgKHJvb21zLmxlbmd0aCA8IDIpIHJldHVybjsKCiAgLy8gUHJpbS1mw6lsZSBNU1Q6IGNzYXRsYWtvem90dCBzem9iw6FrYsOzbCBpbmR1bGp1bmssIMOpcyBhIGxlZ2vDtnplbGViYmkgbmVtIGNzYXRsYWtvenRhdG90dGhveiBow7p6enVuayBmb2x5b3PDs3QKICBjb25zdCBjb25uZWN0ZWQgPSBuZXcgU2V0KFswXSk7CgogIHdoaWxlIChjb25uZWN0ZWQuc2l6ZSA8IHJvb21zLmxlbmd0aCkgewogICAgbGV0IGJlc3REaXN0ID0gSW5maW5pdHk7CiAgICBsZXQgYmVzdEZyb20gPSAtMSwgYmVzdFRvID0gLTE7CgogICAgZm9yIChjb25zdCBpIG9mIGNvbm5lY3RlZCkgewogICAgICBmb3IgKGxldCBqID0gMDsgaiA8IHJvb21zLmxlbmd0aDsgaisrKSB7CiAgICAgICAgaWYgKGNvbm5lY3RlZC5oYXMoaikpIGNvbnRpbnVlOwogICAgICAgIGNvbnN0IGRpc3QgPSBNYXRoLmFicyhyb29tc1tpXS5jeCAtIHJvb21zW2pdLmN4KSArIE1hdGguYWJzKHJvb21zW2ldLmN5IC0gcm9vbXNbal0uY3kpOwogICAgICAgIGlmIChkaXN0IDwgYmVzdERpc3QpIHsKICAgICAgICAgIGJlc3REaXN0ID0gZGlzdDsKICAgICAgICAgIGJlc3RGcm9tID0gaTsKICAgICAgICAgIGJlc3RUbyA9IGo7CiAgICAgICAgfQogICAgICB9CiAgICB9CiAgICBpZiAoYmVzdEZyb20gPCAwKSBicmVhazsKCiAgICAvLyBtZWdwcsOzYsOhbGp1ayBheiDDumogc3pvYsOhdCBiZWvDtnRuaSBCRlMtZWw7IGhhIG5lbSBzaWtlcsO8bCwgZm9yY2VMCiAgICBjb25zdCBvayA9IGNhcnZlQ29ycmlkb3JCRlMoZ3JpZCwgcm9vbUlkR3JpZCwgcm9vbXNbYmVzdEZyb21dLCByb29tc1tiZXN0VG9dLCBncmlkU2l6ZSk7CiAgICBpZiAoIW9rKSB7CiAgICAgIGZvcmNlTENvcnJpZG9yKGdyaWQsIHJvb21JZEdyaWQsIHJvb21zW2Jlc3RGcm9tXSwgcm9vbXNbYmVzdFRvXSwgZ3JpZFNpemUpOwogICAgfQogICAgY29ubmVjdGVkLmFkZChiZXN0VG8pOwogIH0KCiAgLy8gVsOJR1PFkCBFTExFTsWQUlrDiVM6IEJGUyBhIDAuIHN6b2LDoXTDs2wg4oCUIHTDqW55bGVnIG1pbmRlbiBzem9iYSBlbMOpcmhldMWRIHBhZGzDsytmb2x5b3PDsythanTDsy1iw7NsPwogIHZlcmlmeUFuZEZpeChncmlkLCByb29tSWRHcmlkLCByb29tcywgZ3JpZFNpemUpOwoKICAvLyBuw6low6FueSBleHRyYSBrYXBjc29sYXQgKGh1cm9rKSBhIHJlYWxpem11cyBrZWR2w6nDqXJ0CiAgY29uc3QgZXh0cmFzID0gTWF0aC5mbG9vcihyb29tcy5sZW5ndGggLyA0KTsKICBmb3IgKGxldCBlID0gMDsgZSA8IGV4dHJhczsgZSsrKSB7CiAgICBjb25zdCBhID0gcmFuZCgwLCByb29tcy5sZW5ndGggLSAxKTsKICAgIGNvbnN0IGIgPSByYW5kKDAsIHJvb21zLmxlbmd0aCAtIDEpOwogICAgaWYgKGEgIT09IGIpIGNhcnZlQ29ycmlkb3JCRlMoZ3JpZCwgcm9vbUlkR3JpZCwgcm9vbXNbYV0sIHJvb21zW2JdLCBncmlkU2l6ZSk7CiAgfQp9CgovLyBFbGxlbsWRcnrDqXM6IGhhIHZhbGFtZWx5aWsgc3pvYmEgbmVtIGVsw6lyaGV0xZEsIGVyxZFsdGV0ZXR0IGthcGNzb2xhdG90IGjDunp1bmsKZnVuY3Rpb24gdmVyaWZ5QW5kRml4KGdyaWQsIHJvb21JZEdyaWQsIHJvb21zLCBncmlkU2l6ZSkgewogIGZvciAobGV0IHNhZmV0eSA9IDA7IHNhZmV0eSA8IDEwOyBzYWZldHkrKykgewogICAgY29uc3QgcmVhY2hlZCA9IGZsb29kRmlsbFJvb21zKGdyaWQsIHJvb21JZEdyaWQsIHJvb21zLCAwLCBncmlkU2l6ZSk7CiAgICBpZiAocmVhY2hlZC5zaXplID09PSByb29tcy5sZW5ndGgpIHJldHVybjsgLy8gbWluZGVuIE9LCgogICAgLy8gdGFsw6FsanVuayBlZ3kgbmVtIGVsw6lydCBzem9iw6F0IMOpcyBrw7Zzc8O8ayBhIGxlZ2vDtnplbGViYmkgZWzDqXJ0aGV6CiAgICBmb3IgKGxldCBpID0gMDsgaSA8IHJvb21zLmxlbmd0aDsgaSsrKSB7CiAgICAgIGlmICghcmVhY2hlZC5oYXMoaSkpIHsKICAgICAgICBsZXQgYmVzdEZyb20gPSAtMSwgYmVzdERpc3QgPSBJbmZpbml0eTsKICAgICAgICBmb3IgKGNvbnN0IGogb2YgcmVhY2hlZCkgewogICAgICAgICAgY29uc3QgZGlzdCA9IE1hdGguYWJzKHJvb21zW2ldLmN4IC0gcm9vbXNbal0uY3gpICsgTWF0aC5hYnMocm9vbXNbaV0uY3kgLSByb29tc1tqXS5jeSk7CiAgICAgICAgICBpZiAoZGlzdCA8IGJlc3REaXN0KSB7IGJlc3REaXN0ID0gZGlzdDsgYmVzdEZyb20gPSBqOyB9CiAgICAgICAgfQogICAgICAgIGlmIChiZXN0RnJvbSA+PSAwKSB7CiAgICAgICAgICBjb25zdCBvayA9IGNhcnZlQ29ycmlkb3JCRlMoZ3JpZCwgcm9vbUlkR3JpZCwgcm9vbXNbYmVzdEZyb21dLCByb29tc1tpXSwgZ3JpZFNpemUpOwogICAgICAgICAgaWYgKCFvaykgZm9yY2VMQ29ycmlkb3IoZ3JpZCwgcm9vbUlkR3JpZCwgcm9vbXNbYmVzdEZyb21dLCByb29tc1tpXSwgZ3JpZFNpemUpOwogICAgICAgIH0KICAgICAgICBicmVhazsKICAgICAgfQogICAgfQogIH0KfQoKLy8gRWzDqXJoZXTFkSBzem9iw6FrIGhhbG1hemEgYSAic3RhcnRSb29tSW5kZXgiLWLFkWwsIHBhZGzDs24rZm9seW9zw7NuK2FqdMOzbiDDoXQKZnVuY3Rpb24gZmxvb2RGaWxsUm9vbXMoZ3JpZCwgcm9vbUlkR3JpZCwgcm9vbXMsIHN0YXJ0Um9vbUluZGV4LCBncmlkU2l6ZSkgewogIGNvbnN0IHN0YXJ0ID0gcm9vbXNbc3RhcnRSb29tSW5kZXhdOwogIGNvbnN0IHZpc2l0ZWQgPSBBcnJheS5mcm9tKHtsZW5ndGg6IGdyaWRTaXplfSwgKCkgPT4gbmV3IEFycmF5KGdyaWRTaXplKS5maWxsKGZhbHNlKSk7CiAgY29uc3QgcmVhY2hlZCA9IG5ldyBTZXQoW3N0YXJ0Um9vbUluZGV4XSk7CiAgY29uc3QgcXVldWUgPSBbW3N0YXJ0LmN4LCBzdGFydC5jeV1dOwogIHZpc2l0ZWRbc3RhcnQuY3ldW3N0YXJ0LmN4XSA9IHRydWU7CgogIHdoaWxlIChxdWV1ZS5sZW5ndGggPiAwKSB7CiAgICBjb25zdCBbeCwgeV0gPSBxdWV1ZS5zaGlmdCgpOwogICAgY29uc3QgcmlkID0gcm9vbUlkR3JpZFt5XVt4XTsKICAgIGlmIChyaWQgPj0gMCkgcmVhY2hlZC5hZGQocmlkKTsKCiAgICBmb3IgKGNvbnN0IFtkeCwgZHldIG9mIFtbMSwwXSxbLTEsMF0sWzAsMV0sWzAsLTFdXSkgewogICAgICBjb25zdCBueCA9IHggKyBkeCwgbnkgPSB5ICsgZHk7CiAgICAgIGlmICghaW5Cb3VuZHMobngsIG55LCBncmlkU2l6ZSkgfHwgdmlzaXRlZFtueV1bbnhdKSBjb250aW51ZTsKICAgICAgY29uc3QgdCA9IGdyaWRbbnldW254XTsKICAgICAgaWYgKHQgPT09IFRfRkxPT1IgfHwgdCA9PT0gVF9DT1JSSURPUiB8fCB0ID09PSBUX0RPT1IpIHsKICAgICAgICB2aXNpdGVkW255XVtueF0gPSB0cnVlOwogICAgICAgIHF1ZXVlLnB1c2goW254LCBueV0pOwogICAgICB9CiAgICB9CiAgfQogIHJldHVybiByZWFjaGVkOwp9CgovLyA9PT09PT09PT09PT0gRk9MWU9Tw5NLIFJBSlpPTMOBU0EgPT09PT09PT09PT09Ci8vIEJGUyDDunRrZXJlc8OpczogYXogYWp0w7NuIGvDrXbDvGxpIHBvbnR0w7NsIGF6IGFqdMOzbiBrw612w7xsaSBwb250aWcsIHN6b2LDoWtvbiBuZW0ga2VyZXN6dMO8bG1lbnZlCmZ1bmN0aW9uIGNhcnZlQ29ycmlkb3JCRlMoZ3JpZCwgcm9vbUlkR3JpZCwgcm9vbUEsIHJvb21CLCBncmlkU2l6ZSkgewogIGNvbnN0IHB0QSA9IHBpY2tXYWxsUG9pbnQocm9vbUEsIHJvb21CKTsKICBjb25zdCBwdEIgPSBwaWNrV2FsbFBvaW50KHJvb21CLCByb29tQSk7CgogIGNvbnN0IHN0YXJ0WCA9IHB0QS54ICsgcHRBLmR4OwogIGNvbnN0IHN0YXJ0WSA9IHB0QS55ICsgcHRBLmR5OwogIGNvbnN0IGVuZFggPSBwdEIueCArIHB0Qi5keDsKICBjb25zdCBlbmRZID0gcHRCLnkgKyBwdEIuZHk7CgogIGlmICghaW5Cb3VuZHMoc3RhcnRYLCBzdGFydFksIGdyaWRTaXplKSB8fCAhaW5Cb3VuZHMoZW5kWCwgZW5kWSwgZ3JpZFNpemUpKSByZXR1cm4gZmFsc2U7CgogIC8vIEJGUzogV0FMTCwgQ09SUklET1IsIERPT1Itw7ZuIMOhdCDigJQgRkxPT1Itb24gU09IQSAoa2l2w6l2ZSBzdGFydC9lbmQgYW1payBtw6FyIGZhbCkKICBjb25zdCB2aXNpdGVkID0gQXJyYXkuZnJvbSh7bGVuZ3RoOiBncmlkU2l6ZX0sICgpID0+IG5ldyBBcnJheShncmlkU2l6ZSkuZmlsbChmYWxzZSkpOwogIGNvbnN0IHBhcmVudCA9IEFycmF5LmZyb20oe2xlbmd0aDogZ3JpZFNpemV9LCAoKSA9PiBuZXcgQXJyYXkoZ3JpZFNpemUpLmZpbGwobnVsbCkpOwoKICBjb25zdCBxdWV1ZSA9IFtbc3RhcnRYLCBzdGFydFldXTsKICB2aXNpdGVkW3N0YXJ0WV1bc3RhcnRYXSA9IHRydWU7CiAgbGV0IGZvdW5kID0gZmFsc2U7CgogIHdoaWxlIChxdWV1ZS5sZW5ndGggPiAwKSB7CiAgICBjb25zdCBbeCwgeV0gPSBxdWV1ZS5zaGlmdCgpOwogICAgaWYgKHggPT09IGVuZFggJiYgeSA9PT0gZW5kWSkgeyBmb3VuZCA9IHRydWU7IGJyZWFrOyB9CgogICAgZm9yIChjb25zdCBbZHgsIGR5XSBvZiBbWzEsMF0sWy0xLDBdLFswLDFdLFswLC0xXV0pIHsKICAgICAgY29uc3QgbnggPSB4ICsgZHgsIG55ID0geSArIGR5OwogICAgICBpZiAoIWluQm91bmRzKG54LCBueSwgZ3JpZFNpemUpIHx8IHZpc2l0ZWRbbnldW254XSkgY29udGludWU7CiAgICAgIGNvbnN0IHQgPSBncmlkW255XVtueF07CiAgICAgIC8vIHN6b2JhIHBhZGzDs2rDoW4gTkVNIG1lZ3kgw6F0IChheiBpZGVnZW4gc3pvYmEgdMO2bmtyZXRlbm7DqSkKICAgICAgaWYgKHQgPT09IFRfRkxPT1IpIGNvbnRpbnVlOwogICAgICB2aXNpdGVkW255XVtueF0gPSB0cnVlOwogICAgICBwYXJlbnRbbnldW254XSA9IFt4LCB5XTsKICAgICAgcXVldWUucHVzaChbbngsIG55XSk7CiAgICB9CiAgfQoKICBpZiAoIWZvdW5kKSByZXR1cm4gZmFsc2U7CgogIC8vIMO6dHZvbmFsIHJla29uc3RydWtjacOzCiAgY29uc3QgcGF0aCA9IFtdOwogIGxldCBjdXIgPSBbZW5kWCwgZW5kWV07CiAgd2hpbGUgKGN1cikgewogICAgcGF0aC5wdXNoKGN1cik7CiAgICBjdXIgPSBwYXJlbnRbY3VyWzFdXVtjdXJbMF1dOwogIH0KCiAgLy8gYWp0w7NrIGZlbGhlbHllesOpc2UKICBncmlkW3B0QS55XVtwdEEueF0gPSBUX0RPT1I7CiAgZ3JpZFtwdEIueV1bcHRCLnhdID0gVF9ET09SOwoKICAvLyBmb2x5b3PDsyBraXJhanpvbMOhc2EKICBmb3IgKGNvbnN0IFtweCwgcHldIG9mIHBhdGgpIHsKICAgIGlmIChncmlkW3B5XVtweF0gPT09IFRfV0FMTCkgZ3JpZFtweV1bcHhdID0gVF9DT1JSSURPUjsKICB9CiAgcmV0dXJuIHRydWU7Cn0KCi8vIEZhbGxiYWNrOiBlcsWRbHRldGV0dCBMLWFsYWssIGFtaSDDoXR0w7ZyaGV0aSBhIHN6b2LDoWthdCAocml0a2EgZXNldCkKZnVuY3Rpb24gZm9yY2VMQ29ycmlkb3IoZ3JpZCwgcm9vbUlkR3JpZCwgcm9vbUEsIHJvb21CLCBncmlkU2l6ZSkgewogIGNvbnN0IHB0QSA9IHBpY2tXYWxsUG9pbnQocm9vbUEsIHJvb21CKTsKICBjb25zdCBwdEIgPSBwaWNrV2FsbFBvaW50KHJvb21CLCByb29tQSk7CgogIGdyaWRbcHRBLnldW3B0QS54XSA9IFRfRE9PUjsKICBncmlkW3B0Qi55XVtwdEIueF0gPSBUX0RPT1I7CgogIGxldCBjeCA9IHB0QS54ICsgcHRBLmR4OwogIGxldCBjeSA9IHB0QS55ICsgcHRBLmR5OwogIGNvbnN0IGVuZFggPSBwdEIueCArIHB0Qi5keDsKICBjb25zdCBlbmRZID0gcHRCLnkgKyBwdEIuZHk7CgogIGNvbnN0IG1hcmsgPSAoeCwgeSkgPT4gewogICAgaWYgKCFpbkJvdW5kcyh4LCB5LCBncmlkU2l6ZSkpIHJldHVybjsKICAgIC8vIHNhasOhdCBzem9iw6FrYXQgbmUgw61yanVrIGZlbMO8bAogICAgY29uc3QgaW5BID0geCA+PSByb29tQS54ICYmIHggPCByb29tQS54ICsgcm9vbUEudyAmJiB5ID49IHJvb21BLnkgJiYgeSA8IHJvb21BLnkgKyByb29tQS5oOwogICAgY29uc3QgaW5CID0geCA+PSByb29tQi54ICYmIHggPCByb29tQi54ICsgcm9vbUIudyAmJiB5ID49IHJvb21CLnkgJiYgeSA8IHJvb21CLnkgKyByb29tQi5oOwogICAgaWYgKGluQSB8fCBpbkIpIHJldHVybjsKICAgIC8vIGhhIGlkZWdlbiBzem9iYSBwYWRsw7Nqw6FuIG1lZ3nDvG5rIMOhdCwgaGFneWp1ayAobmUgw61yanVrIGZlbMO8bCkg4oCUIGNzYWsgV0FMTCBlc2V0w6luIHJhanpvbHVuawogICAgaWYgKGdyaWRbeV1beF0gPT09IFRfV0FMTCkgZ3JpZFt5XVt4XSA9IFRfQ09SUklET1I7CiAgfTsKCiAgaWYgKE1hdGgucmFuZG9tKCkgPCAwLjUpIHsKICAgIHdoaWxlIChjeCAhPT0gZW5kWCkgeyBtYXJrKGN4LCBjeSk7IGN4ICs9IGN4IDwgZW5kWCA/IDEgOiAtMTsgfQogICAgd2hpbGUgKGN5ICE9PSBlbmRZKSB7IG1hcmsoY3gsIGN5KTsgY3kgKz0gY3kgPCBlbmRZID8gMSA6IC0xOyB9CiAgfSBlbHNlIHsKICAgIHdoaWxlIChjeSAhPT0gZW5kWSkgeyBtYXJrKGN4LCBjeSk7IGN5ICs9IGN5IDwgZW5kWSA/IDEgOiAtMTsgfQogICAgd2hpbGUgKGN4ICE9PSBlbmRYKSB7IG1hcmsoY3gsIGN5KTsgY3ggKz0gY3ggPCBlbmRYID8gMSA6IC0xOyB9CiAgfQogIG1hcmsoZW5kWCwgZW5kWSk7Cn0KCmZ1bmN0aW9uIHBpY2tXYWxsUG9pbnQocm9vbSwgdGFyZ2V0KSB7CiAgY29uc3QgZHggPSB0YXJnZXQuY3ggLSByb29tLmN4OwogIGNvbnN0IGR5ID0gdGFyZ2V0LmN5IC0gcm9vbS5jeTsKCiAgaWYgKE1hdGguYWJzKGR4KSA+PSBNYXRoLmFicyhkeSkpIHsKICAgIGlmIChkeCA+IDApIHJldHVybiB7IHg6IHJvb20ueCArIHJvb20udyAtIDEsIHk6IHJvb20ueSArIE1hdGguZmxvb3Iocm9vbS5oIC8gMiksIGR4OiAxLCBkeTogMCB9OwogICAgZWxzZSByZXR1cm4geyB4OiByb29tLngsIHk6IHJvb20ueSArIE1hdGguZmxvb3Iocm9vbS5oIC8gMiksIGR4OiAtMSwgZHk6IDAgfTsKICB9IGVsc2UgewogICAgaWYgKGR5ID4gMCkgcmV0dXJuIHsgeDogcm9vbS54ICsgTWF0aC5mbG9vcihyb29tLncgLyAyKSwgeTogcm9vbS55ICsgcm9vbS5oIC0gMSwgZHg6IDAsIGR5OiAxIH07CiAgICBlbHNlIHJldHVybiB7IHg6IHJvb20ueCArIE1hdGguZmxvb3Iocm9vbS53IC8gMiksIHk6IHJvb20ueSwgZHg6IDAsIGR5OiAtMSB9OwogIH0KfQoKLy8gPT09PT09PT09PT09IE9LT1MgQsOaVE9SIEVMSEVMWUVaw4lTRSA9PT09PT09PT09PT0KLy8gRmlneWVsZW1iZSB2ZXN6aTogYWp0w7NrIHBvesOtY2nDs2phLCBzem9iYSBtw6lyZXRlLCBiw7p0b3IgdMOtcHVzYSwgY3NvcG9ydG9zw610w6FzCmZ1bmN0aW9uIHBsYWNlRnVybml0dXJlKHJvb20sIGdyaWQsIGdyaWRTaXplKSB7CiAgY29uc3QgcmVjaXBlID0gUk9PTV9GVVJOSVRVUkVbcm9vbS5uYW1lXSB8fCB7IGNvcmU6IFsndGFibGUnXSwgb3B0aW9uYWw6IFsnY2hhaXInLCAnY2hhaXInXSB9OwogIGNvbnN0IHBsYWNlZCA9IFtdOwoKICAvLyAtLS0gMS4gQUpUw5MgQkxPS0tPTMOBUyAtLS0KICAvLyBNaW5kZW4gYWp0w7Nob3ogTUVHQsONWkhBVMOTLCBTWsOJTEVTIGJsb2trb2zDoXM6CiAgLy8gICAtIEF6IGFqdMOzIMO2c3N6ZXMgc3pvbXN6w6lkamEgKDggaXLDoW55YmFuKSBibG9ra29sdmEKICAvLyAgIC0gQSBiZWzDqXDDqXNpIHBvbnR0w7NsIDIgbcOpbHllbiBiZWZlbMOpIGJsb2trb2x2YQogIC8vICAgLSBBIGJlbMOpcMOpc2kgcG9udCBrw7Zyw7xsaSAzeDMgesOzbmEgYmxva2tvbHZhIChzesOpbGVzZWJiIHB1ZmZlcikKICBjb25zdCBibG9ja2VkID0gbmV3IFNldCgpOwogIGNvbnN0IGFkZEJsb2NrZWQgPSAoeCwgeSkgPT4gewogICAgaWYgKHggPj0gcm9vbS54ICYmIHggPCByb29tLnggKyByb29tLncgJiYgeSA+PSByb29tLnkgJiYgeSA8IHJvb20ueSArIHJvb20uaCkgewogICAgICBibG9ja2VkLmFkZChgJHt4fSwke3l9YCk7CiAgICB9CiAgfTsKCiAgLy8gTWluZGVuIFRfRE9PUiBjZWxsYSBhIHN6b2JhIGvDtnJ2b25hbMOhYmFuIHZhZ3kga8O2emVsw6liZW4KICBmb3IgKGxldCB5ID0gcm9vbS55IC0gMTsgeSA8PSByb29tLnkgKyByb29tLmg7IHkrKykgewogICAgZm9yIChsZXQgeCA9IHJvb20ueCAtIDE7IHggPD0gcm9vbS54ICsgcm9vbS53OyB4KyspIHsKICAgICAgaWYgKCFpbkJvdW5kcyh4LCB5LCBncmlkU2l6ZSkpIGNvbnRpbnVlOwogICAgICBpZiAoZ3JpZFt5XVt4XSAhPT0gVF9ET09SKSBjb250aW51ZTsKCiAgICAgIC8vIDEpIEF6IGFqdMOzIHN6b2JhYmVsaSBzem9tc3rDqWRqYSAoaGEgdmFuKSDihpIgYml6dG9zYW4gYmxva2tvbG5pIGtlbGwKICAgICAgLy8gS2VyZXNzw7xrIG1lZyBhIDQgc3pvbXN6w6lkIGvDtnrDvGwgYSBzem9iYSBiZWxzZWrDqWJlbiBsw6l2xZF0L2zDqXbFkWtldAogICAgICBjb25zdCBuZWlnaGJvcnMgPSBbWzEsMF0sWy0xLDBdLFswLDFdLFswLC0xXV07CiAgICAgIGxldCBlbnRyeUZvdW5kID0gZmFsc2U7CiAgICAgIGZvciAoY29uc3QgW25keCwgbmR5XSBvZiBuZWlnaGJvcnMpIHsKICAgICAgICBjb25zdCBleCA9IHggKyBuZHg7CiAgICAgICAgY29uc3QgZXkgPSB5ICsgbmR5OwogICAgICAgIGlmIChleCA8IHJvb20ueCB8fCBleCA+PSByb29tLnggKyByb29tLncpIGNvbnRpbnVlOwogICAgICAgIGlmIChleSA8IHJvb20ueSB8fCBleSA+PSByb29tLnkgKyByb29tLmgpIGNvbnRpbnVlOwoKICAgICAgICBlbnRyeUZvdW5kID0gdHJ1ZTsKICAgICAgICBjb25zdCBkaXJYID0gbmR4OwogICAgICAgIGNvbnN0IGRpclkgPSBuZHk7CgogICAgICAgIC8vIEJlZmVsw6kgMiBtw6lseXPDqWdiZW46IGF6IGVnw6lzeiBzw6F2b3QgKGEgYmVsw6lww6lzaSBwb250ICsgZWdneWVsIG3DqWx5ZWJiIGNlbGxhKQogICAgICAgIGZvciAobGV0IGRlcHRoID0gMDsgZGVwdGggPCAyOyBkZXB0aCsrKSB7CiAgICAgICAgICBjb25zdCBieCA9IGV4ICsgZGlyWCAqIGRlcHRoOwogICAgICAgICAgY29uc3QgYnkgPSBleSArIGRpclkgKiBkZXB0aDsKICAgICAgICAgIGFkZEJsb2NrZWQoYngsIGJ5KTsKICAgICAgICAgIC8vIE9sZGFsaXLDoW55w7ogcHVmZmVyIG1pbmRlbiBtw6lseXPDqWdiZW4gKG5lIGNzYWsgYSBrw7Z6dmV0bGVuIGJlbMOpcMOpc2kgcG9udG9uKQogICAgICAgICAgaWYgKGRpclggIT09IDApIHsKICAgICAgICAgICAgYWRkQmxvY2tlZChieCwgYnkgLSAxKTsKICAgICAgICAgICAgYWRkQmxvY2tlZChieCwgYnkgKyAxKTsKICAgICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgIGFkZEJsb2NrZWQoYnggLSAxLCBieSk7CiAgICAgICAgICAgIGFkZEJsb2NrZWQoYnggKyAxLCBieSk7CiAgICAgICAgICB9CiAgICAgICAgfQogICAgICB9CgogICAgICAvLyAyKSBGYWxsYmFjazogaGEgbmluY3MgYmVsw6lww6lzaSBwb250IChwbC4gYXogYWp0w7Mga8O8bMO2bmxlZ2VzIHBvesOtY2nDs2JhbiB2YW4pLAogICAgICAvLyAgICBha2tvciBheiBhanTDsyBrw7Zyw7xsaSAzeDMgesOzbmEgbWluZGVuIHN6b2JhaSBjZWxsw6Fqw6F0IGJsb2trb2xqdWsKICAgICAgaWYgKCFlbnRyeUZvdW5kKSB7CiAgICAgICAgZm9yIChsZXQgb3kgPSAtMTsgb3kgPD0gMTsgb3krKykgewogICAgICAgICAgZm9yIChsZXQgb3ggPSAtMTsgb3ggPD0gMTsgb3grKykgewogICAgICAgICAgICBhZGRCbG9ja2VkKHggKyBveCwgeSArIG95KTsKICAgICAgICAgIH0KICAgICAgICB9CiAgICAgIH0KICAgIH0KICB9CgogIC8vIFN6b2JhIGvDtnplcGUgKGFob2wgYSBzesOhbSBsZXN6KQogIGJsb2NrZWQuYWRkKGAke3Jvb20uY3h9LCR7cm9vbS5jeX1gKTsKCiAgLy8gLS0tIDIuIENFTExBIEtBVEVHw5NSScOBSyAtLS0KICAvLyBGT05UT1M6IGNzYWsgYXpva3JhIGEgY2VsbMOha3JhIGhlbHllemhldMO8bmsgYsO6dG9ydCBhbWlrIFTDiU5ZTEVHRVMgU1pPQkEtUEFETMOTIHRpbGUtb2suCiAgLy8gSGEgZWd5IGZvbHlvc8OzIHZhZ3kgYWp0w7Mgw6F0c3plbGkgYSBzem9iYSB0w6lnbGFsYXBqw6F0LCBhem9rYXQga2kga2VsbCBoYWd5bmkhCiAgY29uc3Qgd2FsbENlbGxzID0gW107CiAgY29uc3QgY29ybmVyQ2VsbHMgPSBbXTsKICBjb25zdCBjZW50ZXJDZWxscyA9IFtdOwoKICBmb3IgKGxldCBkeSA9IDA7IGR5IDwgcm9vbS5oOyBkeSsrKSB7CiAgICBmb3IgKGxldCBkeCA9IDA7IGR4IDwgcm9vbS53OyBkeCsrKSB7CiAgICAgIGNvbnN0IHggPSByb29tLnggKyBkeDsKICAgICAgY29uc3QgeSA9IHJvb20ueSArIGR5OwogICAgICBpZiAoYmxvY2tlZC5oYXMoYCR7eH0sJHt5fWApKSBjb250aW51ZTsKCiAgICAgIC8vIENzYWsgc3pvYmEtcGFkbMOzIGNlbGzDoXJhIHRlaGV0w7xuayBiw7p0b3J0IChmb2x5b3PDsy9hanTDsy9mYWwga2l6w6FydmEpCiAgICAgIGlmIChncmlkW3ldW3hdICE9PSBUX0ZMT09SKSBjb250aW51ZTsKCiAgICAgIGNvbnN0IG9uVG9wID0gZHkgPT09IDAsIG9uQm90dG9tID0gZHkgPT09IHJvb20uaCAtIDE7CiAgICAgIGNvbnN0IG9uTGVmdCA9IGR4ID09PSAwLCBvblJpZ2h0ID0gZHggPT09IHJvb20udyAtIDE7CiAgICAgIGNvbnN0IGlzQ29ybmVyID0gKG9uVG9wIHx8IG9uQm90dG9tKSAmJiAob25MZWZ0IHx8IG9uUmlnaHQpOwogICAgICBjb25zdCBpc1dhbGwgPSBvblRvcCB8fCBvbkJvdHRvbSB8fCBvbkxlZnQgfHwgb25SaWdodDsKCiAgICAgIGlmIChpc0Nvcm5lcikgY29ybmVyQ2VsbHMucHVzaCh7IHgsIHkgfSk7CiAgICAgIGVsc2UgaWYgKGlzV2FsbCkgd2FsbENlbGxzLnB1c2goeyB4LCB5IH0pOwogICAgICBlbHNlIGNlbnRlckNlbGxzLnB1c2goeyB4LCB5IH0pOwogICAgfQogIH0KCiAgY29uc3Qgc2h1ZmZsZSA9IChhcnIpID0+IHsKICAgIGZvciAobGV0IGkgPSBhcnIubGVuZ3RoIC0gMTsgaSA+IDA7IGktLSkgewogICAgICBjb25zdCBqID0gTWF0aC5mbG9vcihNYXRoLnJhbmRvbSgpICogKGkgKyAxKSk7CiAgICAgIFthcnJbaV0sIGFycltqXV0gPSBbYXJyW2pdLCBhcnJbaV1dOwogICAgfQogIH07CiAgc2h1ZmZsZSh3YWxsQ2VsbHMpOyBzaHVmZmxlKGNvcm5lckNlbGxzKTsgc2h1ZmZsZShjZW50ZXJDZWxscyk7CgogIGNvbnN0IHVzZWQgPSBuZXcgU2V0KCk7CiAgY29uc3QgdXNlZEtleSA9ICh4LCB5KSA9PiBgJHt4fSwke3l9YDsKCiAgY29uc3QgcGlja0NlbGwgPSAocGxhY2VtZW50KSA9PiB7CiAgICBsZXQgY2VsbCA9IG51bGw7CiAgICBpZiAocGxhY2VtZW50ID09PSAnd2FsbCcpIHsKICAgICAgY2VsbCA9IHBpY2tVbnVzZWQod2FsbENlbGxzLCB1c2VkKSB8fCBwaWNrVW51c2VkKGNvcm5lckNlbGxzLCB1c2VkKTsKICAgIH0gZWxzZSBpZiAocGxhY2VtZW50ID09PSAnY29ybmVyJykgewogICAgICBjZWxsID0gcGlja1VudXNlZChjb3JuZXJDZWxscywgdXNlZCkgfHwgcGlja1VudXNlZCh3YWxsQ2VsbHMsIHVzZWQpOwogICAgfSBlbHNlIGlmIChwbGFjZW1lbnQgPT09ICdjZW50ZXInKSB7CiAgICAgIGNlbGwgPSBwaWNrVW51c2VkKGNlbnRlckNlbGxzLCB1c2VkKSB8fCBwaWNrVW51c2VkKHdhbGxDZWxscywgdXNlZCk7CiAgICB9IGVsc2UgewogICAgICBjZWxsID0gcGlja1VudXNlZChjZW50ZXJDZWxscywgdXNlZCkgfHwgcGlja1VudXNlZCh3YWxsQ2VsbHMsIHVzZWQpIHx8IHBpY2tVbnVzZWQoY29ybmVyQ2VsbHMsIHVzZWQpOwogICAgfQogICAgcmV0dXJuIGNlbGw7CiAgfTsKCiAgLy8gLS0tIDMuIELDmlRPUkxJU1RBIMOWU1NaRcOBTEzDjVTDgVNBIC0tLQogIC8vIENvcmUgYsO6dG9yb2sgbWluZGlnOyBvcHRpb25hbGLFkWwgYW5ueWksIGFtZW5ueWkgYSBzem9iYSBtw6lyZXTDqWJlIGbDqXIKICBjb25zdCBpbm5lckFyZWEgPSBNYXRoLm1heCgxLCAocm9vbS53IC0gMikgKiAocm9vbS5oIC0gMikpOwogIC8vIE1heDoga2IuIDQwJSBhIGJlbHPFkSB0ZXLDvGxldG5layAoa2lzZWJiIG1pbnQga29yw6FiYmFuIGhvZ3kgbmUgbGVneWVuIHpzw7pmb2x0KQogIGNvbnN0IG1heFRvdGFsID0gTWF0aC5taW4ocmVjaXBlLmNvcmUubGVuZ3RoICsgcmVjaXBlLm9wdGlvbmFsLmxlbmd0aCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgIE1hdGgubWF4KHJlY2lwZS5jb3JlLmxlbmd0aCwgTWF0aC5mbG9vcihpbm5lckFyZWEgKiAwLjUpKSk7CiAgY29uc3Qgb3B0aW9uYWxUYWtlID0gTWF0aC5tYXgoMCwgbWF4VG90YWwgLSByZWNpcGUuY29yZS5sZW5ndGgpOwogIGNvbnN0IG9wdGlvbmFsU2h1ZmZsZWQgPSBbLi4ucmVjaXBlLm9wdGlvbmFsXTsKICBzaHVmZmxlKG9wdGlvbmFsU2h1ZmZsZWQpOwogIGNvbnN0IGNob3Nlbk9wdGlvbmFsID0gb3B0aW9uYWxTaHVmZmxlZC5zbGljZSgwLCBvcHRpb25hbFRha2UpOwoKICAvLyBTesOpdHbDoWxhc3p0anVrOiBORU0tc3rDqWsgYsO6dG9yb2sgKyBzesOpay1saXN0w6FrIChrw7xsw7ZuIGEgbm9ybcOhbCDDqXMgYsOhcnN6w6lrKQogIGNvbnN0IG5vcm1hbEZ1cm5pdHVyZSA9IFtdOwogIGxldCBjaGFpckNvdW50ID0gMDsKICBsZXQgYmFyc3Rvb2xDb3VudCA9IDA7CgogIGZvciAoY29uc3Qga2V5IG9mIFsuLi5yZWNpcGUuY29yZSwgLi4uY2hvc2VuT3B0aW9uYWxdKSB7CiAgICBpZiAoa2V5ID09PSAnY2hhaXInKSBjaGFpckNvdW50Kys7CiAgICBlbHNlIGlmIChrZXkgPT09ICdiYXJzdG9vbCcpIGJhcnN0b29sQ291bnQrKzsKICAgIGVsc2Ugbm9ybWFsRnVybml0dXJlLnB1c2goa2V5KTsKICB9CgogIC8vIFByaW9yaXR5IHN6ZXJpbnQgcmVuZGV6esO8ayBhIG5lbS1zesOpayBiw7p0b3Jva2F0CiAgbm9ybWFsRnVybml0dXJlLnNvcnQoKGEsIGIpID0+IHsKICAgIGNvbnN0IHBhID0gRlVSTklUVVJFX1RZUEVTW2FdPy5wcmlvcml0eSA/PyAwOwogICAgY29uc3QgcGIgPSBGVVJOSVRVUkVfVFlQRVNbYl0/LnByaW9yaXR5ID8/IDA7CiAgICByZXR1cm4gcGIgLSBwYTsKICB9KTsKCiAgLy8gLS0tIDQuIE5FTS1TWsOJSyBCw5pUT1JPSyBFTEhFTFlFWsOJU0UgLS0tCiAgLy8gTWVnamVneWV6esO8ayBheiBhc3p0YWxvay9iw6FycHVsdCBwb3rDrWNpw7Nqw6F0IGEgc3rDqWtla25lawogIGNvbnN0IHRhYmxlUG9zaXRpb25zID0gW107IC8vIHt4LCB5LCB0eXBlfQogIGNvbnN0IGJhclBvc2l0aW9ucyA9IFtdOwoKICBmb3IgKGNvbnN0IGtleSBvZiBub3JtYWxGdXJuaXR1cmUpIHsKICAgIGNvbnN0IGRlZiA9IEZVUk5JVFVSRV9UWVBFU1trZXldOwogICAgaWYgKCFkZWYpIGNvbnRpbnVlOwogICAgY29uc3QgY2VsbCA9IHBpY2tDZWxsKGRlZi5wbGFjZW1lbnQpOwogICAgaWYgKGNlbGwpIHsKICAgICAgdXNlZC5hZGQodXNlZEtleShjZWxsLngsIGNlbGwueSkpOwogICAgICBwbGFjZWQucHVzaCh7IHg6IGNlbGwueCwgeTogY2VsbC55LCB0eXBlOiBrZXkgfSk7CiAgICAgIGlmIChrZXkgPT09ICd0YWJsZScgfHwga2V5ID09PSAnbG9uZ3RhYmxlJykgdGFibGVQb3NpdGlvbnMucHVzaCh7IHg6IGNlbGwueCwgeTogY2VsbC55LCB0eXBlOiBrZXkgfSk7CiAgICAgIGVsc2UgaWYgKGtleSA9PT0gJ2JhcicpIGJhclBvc2l0aW9ucy5wdXNoKHsgeDogY2VsbC54LCB5OiBjZWxsLnkgfSk7CiAgICB9CiAgfQoKICAvLyAtLS0gNS4gU1rDiUtFSyBFTEhFTFlFWsOJU0UgQVNaVEFMIEvDllLDnEwgLS0tCiAgLy8gTWluZGVuIGFzenRhbGhveiBzem9tc3rDqWRvcyBzemFiYWQgY2VsbMOha3JhIHRlc3N6w7xrIGEgc3rDqWtla2V0CiAgY29uc3QgcGxhY2VDaGFpcnNBcm91bmQgPSAocG9zaXRpb25zLCBjaGFpclR5cGUsIGNvdW50KSA9PiB7CiAgICBpZiAocG9zaXRpb25zLmxlbmd0aCA9PT0gMCB8fCBjb3VudCA8PSAwKSByZXR1cm4gMDsKICAgIGxldCByZW1haW5pbmcgPSBjb3VudDsKICAgIGNvbnN0IG5laWdoYm9ycyA9IFtbMSwwXSxbLTEsMF0sWzAsMV0sWzAsLTFdXTsKICAgIC8vIEvDtnJiZWrDoXJqdWsgYXogYXN6dGFsb2thdCDDqXMgbWluZGVuIHN6b21zesOpZG9zIHN6YWJhZCBjZWxsw6FyYSBzesOpayBrZXLDvGxoZXQKICAgIGZvciAoY29uc3QgcG9zIG9mIHBvc2l0aW9ucykgewogICAgICBpZiAocmVtYWluaW5nIDw9IDApIGJyZWFrOwogICAgICBjb25zdCBhZGogPSBbXTsKICAgICAgZm9yIChjb25zdCBbZHgsIGR5XSBvZiBuZWlnaGJvcnMpIHsKICAgICAgICBjb25zdCBueCA9IHBvcy54ICsgZHgsIG55ID0gcG9zLnkgKyBkeTsKICAgICAgICAvLyBjc2FrIGFra29yIGhhIGEgc3pvYsOhbiBiZWzDvGwgdmFuLCBuZW0gYmxva2tvbHQsIG5lbSBoYXN6bsOhbHQsIMOJUyB0w6lueWxlZ2VzZW4gc3pvYmEtcGFkbMOzCiAgICAgICAgaWYgKG54IDwgcm9vbS54IHx8IG54ID49IHJvb20ueCArIHJvb20udykgY29udGludWU7CiAgICAgICAgaWYgKG55IDwgcm9vbS55IHx8IG55ID49IHJvb20ueSArIHJvb20uaCkgY29udGludWU7CiAgICAgICAgaWYgKGdyaWRbbnldW254XSAhPT0gVF9GTE9PUikgY29udGludWU7CiAgICAgICAgY29uc3QgayA9IHVzZWRLZXkobngsIG55KTsKICAgICAgICBpZiAodXNlZC5oYXMoaykgfHwgYmxvY2tlZC5oYXMoaykpIGNvbnRpbnVlOwogICAgICAgIGFkai5wdXNoKHsgeDogbngsIHk6IG55IH0pOwogICAgICB9CiAgICAgIHNodWZmbGUoYWRqKTsKICAgICAgZm9yIChjb25zdCBhIG9mIGFkaikgewogICAgICAgIGlmIChyZW1haW5pbmcgPD0gMCkgYnJlYWs7CiAgICAgICAgdXNlZC5hZGQodXNlZEtleShhLngsIGEueSkpOwogICAgICAgIHBsYWNlZC5wdXNoKHsgeDogYS54LCB5OiBhLnksIHR5cGU6IGNoYWlyVHlwZSB9KTsKICAgICAgICByZW1haW5pbmctLTsKICAgICAgfQogICAgfQogICAgcmV0dXJuIGNvdW50IC0gcmVtYWluaW5nOyAvLyBow6FueSBrZXLDvGx0IGxlCiAgfTsKCiAgcGxhY2VDaGFpcnNBcm91bmQodGFibGVQb3NpdGlvbnMsICdjaGFpcicsIGNoYWlyQ291bnQpOwogIHBsYWNlQ2hhaXJzQXJvdW5kKGJhclBvc2l0aW9ucywgJ2JhcnN0b29sJywgYmFyc3Rvb2xDb3VudCk7CgogIC8vIE1lZ21hcmFkdCBzesOpa2VrZXQgTkVNIGhlbHllenrDvGsgZWwgcmFuZG9tIOKAlCBoYSBuZW0gZsOpcnQgYXN6dGFsIGvDtnLDqSwgaW5rw6FiYiBuaW5jcyBzesOpawogIC8vIEV6IGEgbMOpbnllZzogbmUgbGVneWVuICJyYW5kb20gc3rDqWsgYSBmYWwgbWVsbGV0dCIKCiAgcmV0dXJuIHBsYWNlZDsKfQoKZnVuY3Rpb24gcGlja1VudXNlZChjZWxscywgdXNlZCkgewogIGZvciAoY29uc3QgYyBvZiBjZWxscykgewogICAgY29uc3QgayA9IGAke2MueH0sJHtjLnl9YDsKICAgIGlmICghdXNlZC5oYXMoaykpIHJldHVybiBjOwogIH0KICByZXR1cm4gbnVsbDsKfQoKLy8gPT09PT09PT09PT09IEzDiVBDU8WQSyA9PT09PT09PT09PT0KLy8gQ3NhayBlemVrYsWRbCBhIHN6b2LDoWtiw7NsIHZlemV0aGV0IGzDqXBjc8WRIChrYXBjc29sw7Nkw7MsIMOhdGrDoXLDsyBqZWxsZWfFsSBoZWx5aXPDqWdlaykKY29uc3QgU1RBSVJfQ0FQQUJMRV9ST09NUyA9IG5ldyBTZXQoWwogIC8vIMOBbHRhbMOhbm9zIMOhdGrDoXLDsy1zem9iw6FrCiAgIkvDtnrDtnMgVGVyZW0iLCAiVGVyZW0iLCAiU8O2bnTDqXMiLCAiRm9seW9zw7MiLAogICJCw6FsdGVyZW0iLCAiU3phbG9uIiwgIkZvZ2Fkw7MgVGVyZW0iLAogIC8vIFRlbXBsb20KICAiRsWRc3plbnTDqWx5IiwgIk9sdMOhciIsCiAgLy8gVMO2bWzDtmMgLyByb21vawogICLFkHJzem9iYSIsICLDlnNzemVkxZFsdCBDc2Fybm9rIiwgIk9tbGFkb3rDsyBMw6lwY3PFkWjDoXoiLCAiRsO2bGRhbGF0dGkgSsOhcmF0IiwgIlJpdHXDoWxpcyBTemVudMOpbHkiLAogIC8vIFRvcm9ueQogICJMYWJvcmF0w7NyaXVtIiwgIkvDtm55dnTDoXIiLCAiSWTDqXrFkWthbXJhIiwgIk1lZGl0w6FjacOzcyBLYW1yYSIsCiAgLy8gS8O6cmlhCiAgIkvDtm55dnTDoXIiLCAiRG9sZ296w7Nzem9iYSIsCiAgLy8gS29jc21hCiAgIlZlbmTDqWdzem9iYSIsICJUdWxhamRvbm9zIFN6b2LDoWphIiwKICAvLyBUb2x2YWoKICAiU3rDtnZldGtlemV0aSBUZXJlbSIsICJSZWp0ZWtoZWx5IiwKXSk7CgpmdW5jdGlvbiBjb25uZWN0Rmxvb3JzV2l0aFN0YWlycyhmbG9vcnMsIGJ1aWxkaW5nVHlwZSkgewogIGZvciAobGV0IGYgPSAwOyBmIDwgZmxvb3JzLmxlbmd0aCAtIDE7IGYrKykgewogICAgY29uc3QgbG93ZXIgPSBmbG9vcnNbZl07CiAgICBjb25zdCB1cHBlciA9IGZsb29yc1tmICsgMV07CiAgICBpZiAobG93ZXIucm9vbXMubGVuZ3RoID09PSAwIHx8IHVwcGVyLnJvb21zLmxlbmd0aCA9PT0gMCkgY29udGludWU7CgogICAgLy8gSMOhbnkgbMOpcGNzxZEgbGVneWVuIGV6ZW4gYSBzemludGVuPwogICAgLy8gQWxhcMOpcnRlbG1lemV0dDogMSBsw6lwY3PFkS4gMiBsw6lwY3PFkSBoYSBtaW5ka8OpdCBzemludG5layA+PSA4IHN6b2LDoWphIHZhbi4KICAgIC8vIEZvZ2Fkw7Nuw6FsOiBoYSB2YW4gMisgc3ppbnQsIGxlaGV0IDIgbMOpcGNzxZEgYSBzesOhbGzDoXNoZWx5ZW4gKGhhIGVsw6lnIG5hZ3kpLgogICAgbGV0IG51bVN0YWlycyA9IDE7CiAgICBpZiAobG93ZXIucm9vbXMubGVuZ3RoID49IDggJiYgdXBwZXIucm9vbXMubGVuZ3RoID49IDgpIHsKICAgICAgbnVtU3RhaXJzID0gMjsKICAgIH0KICAgIC8vIFNvaGEgbmUgbGVneWVuIHTDtmJiLCBtaW50IGEga8OpdCBzemludCBtaW5pbXVtw6FuYWsgYSBmZWxlCiAgICBudW1TdGFpcnMgPSBNYXRoLm1pbihudW1TdGFpcnMsIE1hdGguZmxvb3IoTWF0aC5taW4obG93ZXIucm9vbXMubGVuZ3RoLCB1cHBlci5yb29tcy5sZW5ndGgpIC8gMykpOwogICAgaWYgKG51bVN0YWlycyA8IDEpIG51bVN0YWlycyA9IDE7CgogICAgLy8gSmVsw7ZsdCBzem9iw6FrIGxpc3TDoWphCiAgICBjb25zdCBsb3dlckNhbmRpZGF0ZXMgPSBmaWx0ZXJTdGFpckNhbmRpZGF0ZXMobG93ZXIucm9vbXMpOwogICAgY29uc3QgdXBwZXJDYW5kaWRhdGVzID0gZmlsdGVyU3RhaXJDYW5kaWRhdGVzKHVwcGVyLnJvb21zKTsKCiAgICBjb25zdCB1c2VkTG93ZXIgPSBuZXcgU2V0KCk7CiAgICBjb25zdCB1c2VkVXBwZXIgPSBuZXcgU2V0KCk7CgogICAgZm9yIChsZXQgcyA9IDA7IHMgPCBudW1TdGFpcnM7IHMrKykgewogICAgICBjb25zdCBhdmFpbGFibGVMb3dlciA9IGxvd2VyQ2FuZGlkYXRlcy5maWx0ZXIociA9PiAhdXNlZExvd2VyLmhhcyhyLmlkKSAmJiAhci5zdGFpcnMpOwogICAgICBjb25zdCBhdmFpbGFibGVVcHBlciA9IHVwcGVyQ2FuZGlkYXRlcy5maWx0ZXIociA9PiAhdXNlZFVwcGVyLmhhcyhyLmlkKSAmJiAhci5zdGFpcnMpOwogICAgICBpZiAoYXZhaWxhYmxlTG93ZXIubGVuZ3RoID09PSAwIHx8IGF2YWlsYWJsZVVwcGVyLmxlbmd0aCA9PT0gMCkgYnJlYWs7CgogICAgICAvLyBLZXJlc3PDvGsgYSBsZWdrw7Z6ZWxlYmJpIHDDoXJ0IChjeC9jeSBhbGFwasOhbikg4oCUIHRlcm3DqXN6ZXRlc2ViYgogICAgICBsZXQgYmVzdEwgPSBhdmFpbGFibGVMb3dlclswXSwgYmVzdFUgPSBhdmFpbGFibGVVcHBlclswXTsKICAgICAgbGV0IGJlc3REaXN0ID0gSW5maW5pdHk7CiAgICAgIGZvciAoY29uc3QgbCBvZiBhdmFpbGFibGVMb3dlcikgewogICAgICAgIGZvciAoY29uc3QgdSBvZiBhdmFpbGFibGVVcHBlcikgewogICAgICAgICAgY29uc3QgZCA9IE1hdGguYWJzKGwuY3ggLSB1LmN4KSArIE1hdGguYWJzKGwuY3kgLSB1LmN5KTsKICAgICAgICAgIGlmIChkIDwgYmVzdERpc3QpIHsgYmVzdERpc3QgPSBkOyBiZXN0TCA9IGw7IGJlc3RVID0gdTsgfQogICAgICAgIH0KICAgICAgfQoKICAgICAgYmVzdEwuc3RhaXJzID0geyBkaXJlY3Rpb246ICd1cCcsIHRhcmdldEZsb29yOiBmICsgMSwgdGFyZ2V0Um9vbTogYmVzdFUuaWQgfTsKICAgICAgYmVzdFUuc3RhaXJzID0geyBkaXJlY3Rpb246ICdkb3duJywgdGFyZ2V0Rmxvb3I6IGYsIHRhcmdldFJvb206IGJlc3RMLmlkIH07CiAgICAgIHVzZWRMb3dlci5hZGQoYmVzdEwuaWQpOwogICAgICB1c2VkVXBwZXIuYWRkKGJlc3RVLmlkKTsKICAgIH0KICB9Cn0KCi8vIE9seWFuIHN6b2LDoWssIGFob25uYW4gw6lyZGVtZXMgbMOpcGNzxZF0IGluZMOtdGFuaQpmdW5jdGlvbiBmaWx0ZXJTdGFpckNhbmRpZGF0ZXMocm9vbXMpIHsKICBjb25zdCBjYXBhYmxlID0gcm9vbXMuZmlsdGVyKHIgPT4gU1RBSVJfQ0FQQUJMRV9ST09NUy5oYXMoci5uYW1lKSk7CiAgLy8gSGEgbmluY3MgZWd5ZXRsZW4gw6F0asOhcsOzLWplbGxlZ8WxIHN6b2JhIHNlbSwgZmFsbGJhY2s6IGEgbGVnbmFneW9iYiBzem9iw6FrCiAgaWYgKGNhcGFibGUubGVuZ3RoID09PSAwKSB7CiAgICByZXR1cm4gWy4uLnJvb21zXS5zb3J0KChhLCBiKSA9PiAoYi53ICogYi5oKSAtIChhLncgKiBhLmgpKS5zbGljZSgwLCBNYXRoLm1heCgxLCBNYXRoLmNlaWwocm9vbXMubGVuZ3RoIC8gMikpKTsKICB9CiAgcmV0dXJuIGNhcGFibGU7Cn0KCi8vID09PT09PT09PT09PSBSQUpaT0zDgVMgPT09PT09PT09PT09CmZ1bmN0aW9uIHJlbmRlckZsb29yVGFicygpIHsKICBjb25zdCBjb250YWluZXIgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnZmxvb3JUYWJzJyk7CiAgY29udGFpbmVyLmlubmVySFRNTCA9ICcnOwogIGZvciAobGV0IGkgPSAwOyBpIDwgY3VycmVudEJ1aWxkaW5nLm51bUZsb29yczsgaSsrKSB7CiAgICBjb25zdCB0YWIgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdidXR0b24nKTsKICAgIHRhYi5jbGFzc05hbWUgPSAnZmxvb3ItdGFiJyArIChpID09PSBhY3RpdmVGbG9vciA/ICcgYWN0aXZlJyA6ICcnKTsKICAgIGNvbnN0IGxhYmVsSW5kZXggPSBNYXRoLm1pbihpICsgMSwgRkxPT1JfTkFNRVMubGVuZ3RoIC0gMSk7CiAgICB0YWIudGV4dENvbnRlbnQgPSBGTE9PUl9OQU1FU1tsYWJlbEluZGV4XTsKICAgIHRhYi5vbmNsaWNrID0gKCkgPT4gewogICAgICBhY3RpdmVGbG9vciA9IGk7CiAgICAgIHJlbmRlckZsb29yVGFicygpOwogICAgICBkcmF3TWFwKCk7CiAgICB9OwogICAgY29udGFpbmVyLmFwcGVuZENoaWxkKHRhYik7CiAgfQp9CgpmdW5jdGlvbiBkcmF3TWFwKCkgewogIGNvbnN0IGNhbnZhcyA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdtYXBDYW52YXMnKTsKICBjb25zdCBjdHggPSBjYW52YXMuZ2V0Q29udGV4dCgnMmQnKTsKICBjb25zdCBncyA9IGN1cnJlbnRCdWlsZGluZy5ncmlkU2l6ZTsKICBjb25zdCBjZWxsID0gY2FudmFzLndpZHRoIC8gZ3M7CiAgY29uc3QgZmxvb3IgPSBjdXJyZW50QnVpbGRpbmcuZmxvb3JzW2FjdGl2ZUZsb29yXTsKCiAgY3R4LmZpbGxTdHlsZSA9ICcjZjRlNGJjJzsKICBjdHguZmlsbFJlY3QoMCwgMCwgY2FudmFzLndpZHRoLCBjYW52YXMuaGVpZ2h0KTsKCiAgLy8gZ3JhaW4gdGV4dMO6cmEKICBmb3IgKGxldCBpID0gMDsgaSA8IDMwMDA7IGkrKykgewogICAgY3R4LmZpbGxTdHlsZSA9IGByZ2JhKDEzOSwgMTExLCA3MSwgJHtNYXRoLnJhbmRvbSgpICogMC4wOH0pYDsKICAgIGN0eC5maWxsUmVjdChNYXRoLnJhbmRvbSgpICogY2FudmFzLndpZHRoLCBNYXRoLnJhbmRvbSgpICogY2FudmFzLmhlaWdodCwgMiwgMik7CiAgfQoKICAvLyBoYWx2w6FueSByw6FjcwogIGN0eC5zdHJva2VTdHlsZSA9ICdyZ2JhKDU4LCA0MCwgMjMsIDAuMDgpJzsKICBjdHgubGluZVdpZHRoID0gMTsKICBmb3IgKGxldCBpID0gMDsgaSA8PSBnczsgaSsrKSB7CiAgICBjdHguYmVnaW5QYXRoKCk7CiAgICBjdHgubW92ZVRvKGkgKiBjZWxsLCAwKTsKICAgIGN0eC5saW5lVG8oaSAqIGNlbGwsIGNhbnZhcy5oZWlnaHQpOwogICAgY3R4LnN0cm9rZSgpOwogICAgY3R4LmJlZ2luUGF0aCgpOwogICAgY3R4Lm1vdmVUbygwLCBpICogY2VsbCk7CiAgICBjdHgubGluZVRvKGNhbnZhcy53aWR0aCwgaSAqIGNlbGwpOwogICAgY3R4LnN0cm9rZSgpOwogIH0KCiAgLy8gdGlsZS1vbmvDqW50CiAgZm9yIChsZXQgeSA9IDA7IHkgPCBnczsgeSsrKSB7CiAgICBmb3IgKGxldCB4ID0gMDsgeCA8IGdzOyB4KyspIHsKICAgICAgY29uc3QgdGlsZSA9IGZsb29yLmdyaWRbeV1beF07CiAgICAgIGNvbnN0IHB4ID0geCAqIGNlbGwsIHB5ID0geSAqIGNlbGw7CgogICAgICBpZiAodGlsZSA9PT0gVF9GTE9PUikgewogICAgICAgIGN0eC5maWxsU3R5bGUgPSAnI2U4ZDRhOCc7CiAgICAgICAgY3R4LmZpbGxSZWN0KHB4LCBweSwgY2VsbCwgY2VsbCk7CiAgICAgIH0gZWxzZSBpZiAodGlsZSA9PT0gVF9DT1JSSURPUikgewogICAgICAgIGN0eC5maWxsU3R5bGUgPSAnI2M5YTg3Nyc7CiAgICAgICAgY3R4LmZpbGxSZWN0KHB4LCBweSwgY2VsbCwgY2VsbCk7CiAgICAgIH0gZWxzZSBpZiAodGlsZSA9PT0gVF9ET09SKSB7CiAgICAgICAgY3R4LmZpbGxTdHlsZSA9ICcjYzlhODc3JzsKICAgICAgICBjdHguZmlsbFJlY3QocHgsIHB5LCBjZWxsLCBjZWxsKTsKICAgICAgICBjdHguZmlsbFN0eWxlID0gJyM1YTNhMWEnOwogICAgICAgIGN0eC5maWxsUmVjdChweCArIGNlbGwgKiAwLjE1LCBweSArIGNlbGwgKiAwLjE1LCBjZWxsICogMC43LCBjZWxsICogMC43KTsKICAgICAgfQogICAgfQogIH0KCiAgLy8gZmFsYWs6IHRpbGUgc3rDqWxlayBhaG9sIHBhZGzDsy9mb2x5b3PDsyB0YWzDoWxrb3ppayBmYWxsYWwKICBkcmF3V2FsbHMoY3R4LCBmbG9vciwgY2VsbCwgZ3MpOwoKICAvLyBzem9iYSBzesOhbW9rCiAgZm9yIChjb25zdCByb29tIG9mIGZsb29yLnJvb21zKSB7CiAgICBjdHguZmlsbFN0eWxlID0gJyMzYTI4MTcnOwogICAgY3R4LmZvbnQgPSBgYm9sZCAke01hdGgubWF4KGNlbGwgKiAxLjEsIDE0KX1weCBDaW56ZWwsIHNlcmlmYDsKICAgIGN0eC50ZXh0QWxpZ24gPSAnY2VudGVyJzsKICAgIGN0eC50ZXh0QmFzZWxpbmUgPSAnbWlkZGxlJzsKICAgIGN0eC5maWxsVGV4dChyb29tLmlkLCAocm9vbS54ICsgcm9vbS53LzIpICogY2VsbCwgKHJvb20ueSArIHJvb20uaC8yKSAqIGNlbGwpOwogIH0KCiAgLy8gYsO6dG9yb2sKICBmb3IgKGNvbnN0IHJvb20gb2YgZmxvb3Iucm9vbXMpIGRyYXdGdXJuaXR1cmUoY3R4LCByb29tLCBjZWxsKTsKCiAgLy8gaWtvbm9rCiAgZm9yIChjb25zdCByb29tIG9mIGZsb29yLnJvb21zKSBkcmF3Um9vbUljb25zKGN0eCwgcm9vbSwgY2VsbCk7Cn0KCmZ1bmN0aW9uIGRyYXdGdXJuaXR1cmUoY3R4LCByb29tLCBjZWxsKSB7CiAgaWYgKCFyb29tLmZ1cm5pdHVyZSkgcmV0dXJuOwogIGZvciAoY29uc3QgZiBvZiByb29tLmZ1cm5pdHVyZSkgewogICAgY29uc3QgdHlwZSA9IEZVUk5JVFVSRV9UWVBFU1tmLnR5cGVdOwogICAgaWYgKCF0eXBlKSBjb250aW51ZTsKCiAgICBjb25zdCBweCA9IGYueCAqIGNlbGw7CiAgICBjb25zdCBweSA9IGYueSAqIGNlbGw7CiAgICBjb25zdCBzaXplID0gY2VsbCAqIDAuODU7CiAgICBjb25zdCBvZmZzZXQgPSAoY2VsbCAtIHNpemUpIC8gMjsKCiAgICAvLyBoYWx2w6FueSAiw6FybnnDqWsiIGEgYsO6dG9yIGFsYXR0CiAgICBjdHguZmlsbFN0eWxlID0gJ3JnYmEoNTgsIDQwLCAyMywgMC4xNSknOwogICAgY3R4LmZpbGxSZWN0KHB4ICsgb2Zmc2V0ICsgMSwgcHkgKyBvZmZzZXQgKyAxLCBzaXplLCBzaXplKTsKCiAgICAvLyBiw7p0b3Igc3ppbWLDs2x1bQogICAgY3R4LmZpbGxTdHlsZSA9IHR5cGUuY29sb3I7CiAgICBjdHguZm9udCA9IGBib2xkICR7Y2VsbCAqIDAuODV9cHggQ2luemVsLCBzZXJpZmA7CiAgICBjdHgudGV4dEFsaWduID0gJ2NlbnRlcic7CiAgICBjdHgudGV4dEJhc2VsaW5lID0gJ21pZGRsZSc7CiAgICBjdHguZmlsbFRleHQodHlwZS5zeW1ib2wsIHB4ICsgY2VsbC8yLCBweSArIGNlbGwvMik7CiAgfQp9CgpmdW5jdGlvbiBkcmF3V2FsbHMoY3R4LCBmbG9vciwgY2VsbCwgZ3MpIHsKICBjdHguc3Ryb2tlU3R5bGUgPSAnIzNhMjgxNyc7CiAgY3R4LmxpbmVXaWR0aCA9IDIuNTsKCiAgZm9yIChsZXQgeSA9IDA7IHkgPCBnczsgeSsrKSB7CiAgICBmb3IgKGxldCB4ID0gMDsgeCA8IGdzOyB4KyspIHsKICAgICAgY29uc3QgdGlsZSA9IGZsb29yLmdyaWRbeV1beF07CiAgICAgIC8vIGNzYWsgc3pvYmEgcGFkbMOzIMOpcyBmb2x5b3PDsyBrw7Zyw7xsIHJhanpvbHVuayBmYWxhdAogICAgICBpZiAodGlsZSAhPT0gVF9GTE9PUiAmJiB0aWxlICE9PSBUX0NPUlJJRE9SICYmIHRpbGUgIT09IFRfRE9PUikgY29udGludWU7CgogICAgICBjb25zdCBweCA9IHggKiBjZWxsLCBweSA9IHkgKiBjZWxsOwogICAgICBjb25zdCBpc09wZW4gPSAodCkgPT4gdCA9PT0gVF9GTE9PUiB8fCB0ID09PSBUX0NPUlJJRE9SIHx8IHQgPT09IFRfRE9PUjsKCiAgICAgIC8vIGZlbHPFkSBmYWwKICAgICAgaWYgKHkgPT09IDAgfHwgIWlzT3BlbihmbG9vci5ncmlkW3ktMV1beF0pKSB7CiAgICAgICAgY3R4LmJlZ2luUGF0aCgpOyBjdHgubW92ZVRvKHB4LCBweSk7IGN0eC5saW5lVG8ocHggKyBjZWxsLCBweSk7IGN0eC5zdHJva2UoKTsKICAgICAgfQogICAgICAvLyBhbHPDsyBmYWwKICAgICAgaWYgKHkgPT09IGdzLTEgfHwgIWlzT3BlbihmbG9vci5ncmlkW3krMV1beF0pKSB7CiAgICAgICAgY3R4LmJlZ2luUGF0aCgpOyBjdHgubW92ZVRvKHB4LCBweSArIGNlbGwpOyBjdHgubGluZVRvKHB4ICsgY2VsbCwgcHkgKyBjZWxsKTsgY3R4LnN0cm9rZSgpOwogICAgICB9CiAgICAgIC8vIGJhbCBmYWwKICAgICAgaWYgKHggPT09IDAgfHwgIWlzT3BlbihmbG9vci5ncmlkW3ldW3gtMV0pKSB7CiAgICAgICAgY3R4LmJlZ2luUGF0aCgpOyBjdHgubW92ZVRvKHB4LCBweSk7IGN0eC5saW5lVG8ocHgsIHB5ICsgY2VsbCk7IGN0eC5zdHJva2UoKTsKICAgICAgfQogICAgICAvLyBqb2JiIGZhbAogICAgICBpZiAoeCA9PT0gZ3MtMSB8fCAhaXNPcGVuKGZsb29yLmdyaWRbeV1beCsxXSkpIHsKICAgICAgICBjdHguYmVnaW5QYXRoKCk7IGN0eC5tb3ZlVG8ocHggKyBjZWxsLCBweSk7IGN0eC5saW5lVG8ocHggKyBjZWxsLCBweSArIGNlbGwpOyBjdHguc3Ryb2tlKCk7CiAgICAgIH0KICAgIH0KICB9Cn0KCmZ1bmN0aW9uIGRyYXdSb29tSWNvbnMoY3R4LCByb29tLCBjZWxsKSB7CiAgY29uc3QgaWNvbnMgPSBbXTsKICBpZiAocm9vbS5oYXNMb290KSBpY29ucy5wdXNoKHsgY29sb3I6ICcjYTY3YzAwJywgc3ltYm9sOiAnJCcgfSk7CiAgaWYgKHJvb20uaGFzVHJhcCkgaWNvbnMucHVzaCh7IGNvbG9yOiAnIzhiMjUwOCcsIHN5bWJvbDogJyEnIH0pOwogIGlmIChyb29tLmhhc0NyZWF0dXJlKSBpY29ucy5wdXNoKHsgY29sb3I6ICcjMmQ0YTFhJywgc3ltYm9sOiAn4pynJyB9KTsKICBpZiAocm9vbS5zdGFpcnMpIGljb25zLnB1c2goeyBjb2xvcjogJyMxYTNhNWEnLCBzeW1ib2w6IHJvb20uc3RhaXJzLmRpcmVjdGlvbiA9PT0gJ3VwJyA/ICfilrInIDogJ+KWvCcgfSk7CgogIGNvbnN0IGljb25TaXplID0gY2VsbCAqIDAuNzU7CiAgY29uc3Qgc3RhcnRYID0gKHJvb20ueCArIHJvb20udyAtIDEpICogY2VsbCArIGNlbGwgKiAwLjE1OwogIGNvbnN0IHN0YXJ0WSA9IHJvb20ueSAqIGNlbGwgKyBjZWxsICogMC4xOwoKICBpY29ucy5mb3JFYWNoKChpY29uLCBpKSA9PiB7CiAgICBjb25zdCB4ID0gc3RhcnRYLCB5ID0gc3RhcnRZICsgaSAqIChpY29uU2l6ZSArIDIpOwogICAgY3R4LmZpbGxTdHlsZSA9IGljb24uY29sb3I7CiAgICBjdHguYmVnaW5QYXRoKCk7CiAgICBjdHguYXJjKHggKyBpY29uU2l6ZS8yLCB5ICsgaWNvblNpemUvMiwgaWNvblNpemUvMiwgMCwgTWF0aC5QSSAqIDIpOwogICAgY3R4LmZpbGwoKTsKICAgIGN0eC5zdHJva2VTdHlsZSA9ICcjM2EyODE3JzsKICAgIGN0eC5saW5lV2lkdGggPSAxOwogICAgY3R4LnN0cm9rZSgpOwogICAgY3R4LmZpbGxTdHlsZSA9ICcjZjRlNGJjJzsKICAgIGN0eC5mb250ID0gYGJvbGQgJHtpY29uU2l6ZSAqIDAuNzV9cHggQ2luemVsLCBzZXJpZmA7CiAgICBjdHgudGV4dEFsaWduID0gJ2NlbnRlcic7CiAgICBjdHgudGV4dEJhc2VsaW5lID0gJ21pZGRsZSc7CiAgICBjdHguZmlsbFRleHQoaWNvbi5zeW1ib2wsIHggKyBpY29uU2l6ZS8yLCB5ICsgaWNvblNpemUvMik7CiAgfSk7Cn0KCi8vID09PT09PT09PT09PSBERVRBSUxTID09PT09PT09PT09PQpmdW5jdGlvbiByZW5kZXJEZXRhaWxzKCkgewogIGNvbnN0IGNvbnRhaW5lciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdyb29tRGV0YWlscycpOwogIGNvbnRhaW5lci5pbm5lckhUTUwgPSAnJzsKCiAgY3VycmVudEJ1aWxkaW5nLmZsb29ycy5mb3JFYWNoKChmbG9vciwgaWR4KSA9PiB7CiAgICBjb25zdCBoZWFkaW5nID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnZGl2Jyk7CiAgICBoZWFkaW5nLmNsYXNzTmFtZSA9ICdmbG9vci1oZWFkaW5nJzsKICAgIGNvbnN0IGxhYmVsSW5kZXggPSBNYXRoLm1pbihpZHggKyAxLCBGTE9PUl9OQU1FUy5sZW5ndGggLSAxKTsKICAgIGhlYWRpbmcudGV4dENvbnRlbnQgPSBg4pasICR7RkxPT1JfTkFNRVNbbGFiZWxJbmRleF19IOKWrGA7CiAgICBjb250YWluZXIuYXBwZW5kQ2hpbGQoaGVhZGluZyk7CgogICAgZmxvb3Iucm9vbXMuZm9yRWFjaChyb29tID0+IHsKICAgICAgY29uc3QgY2FyZCA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoJ2RpdicpOwogICAgICBjYXJkLmNsYXNzTmFtZSA9ICdyb29tLWNhcmQnOwoKICAgICAgbGV0IGh0bWwgPSBgCiAgICAgICAgPGRpdiBjbGFzcz0icm9vbS1uYW1lIj4KICAgICAgICAgIDxzcGFuPiR7cm9vbS5uYW1lfTwvc3Bhbj4KICAgICAgICAgIDxzcGFuIGNsYXNzPSJyb29tLW51bWJlciI+IyR7cm9vbS5pZH08L3NwYW4+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0icm9vbS1kZXRhaWwiPiR7cm9vbS5kZXNjcmlwdGlvbn08L2Rpdj4KICAgICAgYDsKCiAgICAgIGlmIChyb29tLnN0YWlycykgewogICAgICAgIGNvbnN0IGRpclRleHQgPSByb29tLnN0YWlycy5kaXJlY3Rpb24gPT09ICd1cCcgPyAnTMOpcGNzxZEgZmVsJyA6ICdMw6lwY3PFkSBsZSc7CiAgICAgICAgY29uc3QgdGFyZ2V0TGFiZWwgPSBGTE9PUl9OQU1FU1tNYXRoLm1pbihyb29tLnN0YWlycy50YXJnZXRGbG9vciArIDEsIEZMT09SX05BTUVTLmxlbmd0aCAtIDEpXTsKICAgICAgICBodG1sICs9IGA8ZGl2IGNsYXNzPSJyb29tLWRldGFpbCI+PHN0cm9uZz7wn6qcIEzDqXBjc8WROjwvc3Ryb25nPiA8c3BhbiBjbGFzcz0ic3RhaXJzLXRhZyI+JHtkaXJUZXh0fSDihpIgJHt0YXJnZXRMYWJlbH0gKCMke3Jvb20uc3RhaXJzLnRhcmdldFJvb219KTwvc3Bhbj48L2Rpdj5gOwogICAgICB9CiAgICAgIGlmIChyb29tLmhhc0xvb3QpIGh0bWwgKz0gYDxkaXYgY2xhc3M9InJvb20tZGV0YWlsIj48c3Ryb25nPvCfkrAgS2luY3M6PC9zdHJvbmc+IDxzcGFuIGNsYXNzPSJsb290LXRhZyI+JHtyb29tLmxvb3R9PC9zcGFuPjwvZGl2PmA7CiAgICAgIGlmIChyb29tLmhhc1RyYXApIGh0bWwgKz0gYDxkaXYgY2xhc3M9InJvb20tZGV0YWlsIj48c3Ryb25nPuKaoCBDc2FwZGE6PC9zdHJvbmc+IDxzcGFuIGNsYXNzPSJ0cmFwLXRhZyI+JHtyb29tLnRyYXB9PC9zcGFuPjwvZGl2PmA7CiAgICAgIGlmIChyb29tLmhhc0NyZWF0dXJlKSBodG1sICs9IGA8ZGl2IGNsYXNzPSJyb29tLWRldGFpbCI+PHN0cm9uZz7wn5ehIFN6w7Zybnk6PC9zdHJvbmc+IDxzcGFuIGNsYXNzPSJjcmVhdHVyZS10YWciPiR7cm9vbS5jcmVhdHVyZX08L3NwYW4+PC9kaXY+YDsKCiAgICAgIC8vIGLDunRvciDDtnNzemVzesOhbW9sw6FzYQogICAgICBpZiAocm9vbS5mdXJuaXR1cmUgJiYgcm9vbS5mdXJuaXR1cmUubGVuZ3RoID4gMCkgewogICAgICAgIGNvbnN0IGNvdW50cyA9IHt9OwogICAgICAgIGZvciAoY29uc3QgZiBvZiByb29tLmZ1cm5pdHVyZSkgY291bnRzW2YudHlwZV0gPSAoY291bnRzW2YudHlwZV0gfHwgMCkgKyAxOwogICAgICAgIGNvbnN0IHBhcnRzID0gT2JqZWN0LmVudHJpZXMoY291bnRzKS5tYXAoKFtrLCB2XSkgPT4gewogICAgICAgICAgY29uc3QgbGFiZWwgPSBGVVJOSVRVUkVfVFlQRVNba10/LmxhYmVsIHx8IGs7CiAgICAgICAgICByZXR1cm4gdiA+IDEgPyBgJHt2fcOXICR7bGFiZWx9YCA6IGxhYmVsOwogICAgICAgIH0pOwogICAgICAgIGh0bWwgKz0gYDxkaXYgY2xhc3M9InJvb20tZGV0YWlsIj48c3Ryb25nPvCfqpEgQmVyZW5kZXrDqXM6PC9zdHJvbmc+IDxzcGFuIHN0eWxlPSJmb250LXN0eWxlOml0YWxpYzsiPiR7cGFydHMuam9pbignLCAnKX08L3NwYW4+PC9kaXY+YDsKICAgICAgfQoKICAgICAgY2FyZC5pbm5lckhUTUwgPSBodG1sOwogICAgICBjYXJkLmFkZEV2ZW50TGlzdGVuZXIoJ2NsaWNrJywgKCkgPT4gewogICAgICAgIGlmIChhY3RpdmVGbG9vciAhPT0gaWR4KSB7CiAgICAgICAgICBhY3RpdmVGbG9vciA9IGlkeDsKICAgICAgICAgIHJlbmRlckZsb29yVGFicygpOwogICAgICAgIH0KICAgICAgICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCcucm9vbS1jYXJkJykuZm9yRWFjaChjID0+IGMuY2xhc3NMaXN0LnJlbW92ZSgnaGlnaGxpZ2h0ZWQnKSk7CiAgICAgICAgY2FyZC5jbGFzc0xpc3QuYWRkKCdoaWdobGlnaHRlZCcpOwogICAgICAgIGRyYXdNYXAoKTsKICAgICAgICBoaWdobGlnaHRSb29tKHJvb20pOwogICAgICB9KTsKICAgICAgY29udGFpbmVyLmFwcGVuZENoaWxkKGNhcmQpOwogICAgfSk7CiAgfSk7Cn0KCmZ1bmN0aW9uIGhpZ2hsaWdodFJvb20ocm9vbSkgewogIGNvbnN0IGNhbnZhcyA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdtYXBDYW52YXMnKTsKICBjb25zdCBjdHggPSBjYW52YXMuZ2V0Q29udGV4dCgnMmQnKTsKICBjb25zdCBjZWxsID0gY2FudmFzLndpZHRoIC8gY3VycmVudEJ1aWxkaW5nLmdyaWRTaXplOwogIGN0eC5zdHJva2VTdHlsZSA9ICcjYTY3YzAwJzsKICBjdHgubGluZVdpZHRoID0gNTsKICBjdHguc2hhZG93Q29sb3IgPSAnI2E2N2MwMCc7CiAgY3R4LnNoYWRvd0JsdXIgPSAyMDsKICBjdHguc3Ryb2tlUmVjdChyb29tLnggKiBjZWxsLCByb29tLnkgKiBjZWxsLCByb29tLncgKiBjZWxsLCByb29tLmggKiBjZWxsKTsKICBjdHguc2hhZG93Qmx1ciA9IDA7Cn0KCi8vID09PT09PT09PT09PSBIT1ZFUiBUT09MVElQID09PT09PT09PT09PQpmdW5jdGlvbiBzZXR1cENhbnZhc0hvdmVyKCkgewogIGNvbnN0IGNhbnZhcyA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdtYXBDYW52YXMnKTsKICBjb25zdCB0b29sdGlwID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ21hcFRvb2x0aXAnKTsKCiAgY2FudmFzLmFkZEV2ZW50TGlzdGVuZXIoJ21vdXNlbW92ZScsIChlKSA9PiB7CiAgICBpZiAoIWN1cnJlbnRCdWlsZGluZykgcmV0dXJuOwogICAgY29uc3QgcmVjdCA9IGNhbnZhcy5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKTsKICAgIC8vIGRpc3BsYXkgbcOpcmV0IC8gYmVsc8WRIG3DqXJldCAoYSBjYW52YXMgOTAwcHggYmVsw7xsLCBkZSBDU1MtYmVuIGtpc2ViYiBsZWhldCkKICAgIGNvbnN0IHNjYWxlWCA9IGNhbnZhcy53aWR0aCAvIHJlY3Qud2lkdGg7CiAgICBjb25zdCBzY2FsZVkgPSBjYW52YXMuaGVpZ2h0IC8gcmVjdC5oZWlnaHQ7CiAgICBjb25zdCBtb3VzZVggPSAoZS5jbGllbnRYIC0gcmVjdC5sZWZ0KSAqIHNjYWxlWDsKICAgIGNvbnN0IG1vdXNlWSA9IChlLmNsaWVudFkgLSByZWN0LnRvcCkgKiBzY2FsZVk7CgogICAgY29uc3QgY2VsbCA9IGNhbnZhcy53aWR0aCAvIGN1cnJlbnRCdWlsZGluZy5ncmlkU2l6ZTsKICAgIGNvbnN0IGd4ID0gTWF0aC5mbG9vcihtb3VzZVggLyBjZWxsKTsKICAgIGNvbnN0IGd5ID0gTWF0aC5mbG9vcihtb3VzZVkgLyBjZWxsKTsKCiAgICBjb25zdCBmbG9vciA9IGN1cnJlbnRCdWlsZGluZy5mbG9vcnNbYWN0aXZlRmxvb3JdOwogICAgbGV0IGluZm8gPSBudWxsOwoKICAgIC8vIDEuIFZhbi1lIGLDunRvciBvdHQ/CiAgICBmb3IgKGNvbnN0IHJvb20gb2YgZmxvb3Iucm9vbXMpIHsKICAgICAgaWYgKHJvb20uZnVybml0dXJlKSB7CiAgICAgICAgZm9yIChjb25zdCBmIG9mIHJvb20uZnVybml0dXJlKSB7CiAgICAgICAgICBpZiAoZi54ID09PSBneCAmJiBmLnkgPT09IGd5KSB7CiAgICAgICAgICAgIGNvbnN0IGRlZiA9IEZVUk5JVFVSRV9UWVBFU1tmLnR5cGVdOwogICAgICAgICAgICBpZiAoZGVmKSB7CiAgICAgICAgICAgICAgaW5mbyA9IHsgbGFiZWw6IGRlZi5sYWJlbCwgcm9vbTogcm9vbS5uYW1lICsgJyAoIycgKyByb29tLmlkICsgJyknIH07CiAgICAgICAgICAgIH0KICAgICAgICAgICAgYnJlYWs7CiAgICAgICAgICB9CiAgICAgICAgfQogICAgICB9CiAgICAgIGlmIChpbmZvKSBicmVhazsKICAgIH0KCiAgICAvLyAyLiBIYSBuaW5jcyBiw7p0b3IsIG7DqXp6w7xrIGEgdGlsZSB0w61wdXN0CiAgICBpZiAoIWluZm8gJiYgaW5Cb3VuZHMoZ3gsIGd5LCBjdXJyZW50QnVpbGRpbmcuZ3JpZFNpemUpKSB7CiAgICAgIGNvbnN0IHRpbGUgPSBmbG9vci5ncmlkW2d5XVtneF07CiAgICAgIGlmICh0aWxlID09PSBUX0RPT1IpIHsKICAgICAgICBpbmZvID0geyBsYWJlbDogJ0FqdMOzJywgcm9vbTogJycgfTsKICAgICAgfSBlbHNlIGlmICh0aWxlID09PSBUX0NPUlJJRE9SKSB7CiAgICAgICAgaW5mbyA9IHsgbGFiZWw6ICdGb2x5b3PDsycsIHJvb206ICcnIH07CiAgICAgIH0gZWxzZSBpZiAodGlsZSA9PT0gVF9GTE9PUikgewogICAgICAgIC8vIFRhbMOhbGQgbWVnIG1lbHlpayBzem9iYQogICAgICAgIGZvciAoY29uc3Qgcm9vbSBvZiBmbG9vci5yb29tcykgewogICAgICAgICAgaWYgKGd4ID49IHJvb20ueCAmJiBneCA8IHJvb20ueCArIHJvb20udyAmJiBneSA+PSByb29tLnkgJiYgZ3kgPCByb29tLnkgKyByb29tLmgpIHsKICAgICAgICAgICAgbGV0IGxhYmVsID0gcm9vbS5uYW1lICsgJyAoIycgKyByb29tLmlkICsgJyknOwogICAgICAgICAgICBpZiAocm9vbS5zdGFpcnMpIHsKICAgICAgICAgICAgICBsYWJlbCArPSByb29tLnN0YWlycy5kaXJlY3Rpb24gPT09ICd1cCcgPyAnIOKAlCBMw6lwY3PFkSBmZWwg8J+qnCcgOiAnIOKAlCBMw6lwY3PFkSBsZSDwn6qcJzsKICAgICAgICAgICAgfQogICAgICAgICAgICBpbmZvID0geyBsYWJlbCwgcm9vbTogJycgfTsKICAgICAgICAgICAgYnJlYWs7CiAgICAgICAgICB9CiAgICAgICAgfQogICAgICB9CiAgICB9CgogICAgaWYgKGluZm8pIHsKICAgICAgdG9vbHRpcC5pbm5lckhUTUwgPSBpbmZvLmxhYmVsICsgKGluZm8ucm9vbSA/ICc8c3BhbiBjbGFzcz0idG9vbHRpcC1yb29tIj4nICsgaW5mby5yb29tICsgJzwvc3Bhbj4nIDogJycpOwogICAgICB0b29sdGlwLmNsYXNzTGlzdC5hZGQoJ3Zpc2libGUnKTsKCiAgICAgIC8vIHBvemljaW9uw6Fsw6FzIGEgY3Vyc29yIG1lbGzDqSwgZmlneWVsdmUgaG9neSBuZSBsw7Nnam9uIGtpCiAgICAgIGNvbnN0IHdyYXBwZXIgPSBjYW52YXMucGFyZW50RWxlbWVudDsKICAgICAgY29uc3Qgd3JhcHBlclJlY3QgPSB3cmFwcGVyLmdldEJvdW5kaW5nQ2xpZW50UmVjdCgpOwogICAgICBsZXQgdHggPSBlLmNsaWVudFggLSB3cmFwcGVyUmVjdC5sZWZ0ICsgMTU7CiAgICAgIGxldCB0eSA9IGUuY2xpZW50WSAtIHdyYXBwZXJSZWN0LnRvcCArIDE1OwoKICAgICAgLy8gaGEga2lsw7NnIGpvYmJyYSwgdGVkZCBiYWxyYQogICAgICB0b29sdGlwLnN0eWxlLmxlZnQgPSB0eCArICdweCc7CiAgICAgIHRvb2x0aXAuc3R5bGUudG9wID0gdHkgKyAncHgnOwogICAgICBjb25zdCB0UmVjdCA9IHRvb2x0aXAuZ2V0Qm91bmRpbmdDbGllbnRSZWN0KCk7CiAgICAgIGlmICh0UmVjdC5yaWdodCA+IHdyYXBwZXJSZWN0LnJpZ2h0KSB7CiAgICAgICAgdHggPSBlLmNsaWVudFggLSB3cmFwcGVyUmVjdC5sZWZ0IC0gdFJlY3Qud2lkdGggLSAxNTsKICAgICAgICB0b29sdGlwLnN0eWxlLmxlZnQgPSB0eCArICdweCc7CiAgICAgIH0KICAgICAgaWYgKHRSZWN0LmJvdHRvbSA+IHdyYXBwZXJSZWN0LmJvdHRvbSkgewogICAgICAgIHR5ID0gZS5jbGllbnRZIC0gd3JhcHBlclJlY3QudG9wIC0gdFJlY3QuaGVpZ2h0IC0gMTU7CiAgICAgICAgdG9vbHRpcC5zdHlsZS50b3AgPSB0eSArICdweCc7CiAgICAgIH0KICAgIH0gZWxzZSB7CiAgICAgIHRvb2x0aXAuY2xhc3NMaXN0LnJlbW92ZSgndmlzaWJsZScpOwogICAgfQogIH0pOwoKICBjYW52YXMuYWRkRXZlbnRMaXN0ZW5lcignbW91c2VsZWF2ZScsICgpID0+IHsKICAgIHRvb2x0aXAuY2xhc3NMaXN0LnJlbW92ZSgndmlzaWJsZScpOwogIH0pOwp9CgpzZXR1cENhbnZhc0hvdmVyKCk7CgovLyA9PT09PT09PT09PT0gRVhQT1JUID09PT09PT09PT09PQpmdW5jdGlvbiBleHBvcnRNYXAoKSB7CiAgaWYgKCFjdXJyZW50QnVpbGRpbmcpIHsgYWxlcnQoJ0VsxZFzesO2ciBnZW5lcsOhbGogZWd5IMOpcMO8bGV0ZXQhJyk7IHJldHVybjsgfQogIGNvbnN0IGNhbnZhcyA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdtYXBDYW52YXMnKTsKICBjb25zdCBmbG9vciA9IGN1cnJlbnRCdWlsZGluZy5mbG9vcnNbYWN0aXZlRmxvb3JdOwoKICAvLyBDc2FrIGEgamVsZW5sZWdpIHN6aW50ZW4gaGFzem7DoWx0IGLDunRvcm9rCiAgY29uc3QgdXNlZFR5cGVzID0gbmV3IFNldCgpOwogIGZvciAoY29uc3Qgcm9vbSBvZiBmbG9vci5yb29tcykgewogICAgaWYgKHJvb20uZnVybml0dXJlKSBmb3IgKGNvbnN0IGYgb2Ygcm9vbS5mdXJuaXR1cmUpIHVzZWRUeXBlcy5hZGQoZi50eXBlKTsKICB9CiAgY29uc3QgbGVnZW5kSXRlbXMgPSBbLi4udXNlZFR5cGVzXS5tYXAoa2V5ID0+ICh7IGtleSwgZGVmOiBGVVJOSVRVUkVfVFlQRVNba2V5XSB9KSkuZmlsdGVyKGkgPT4gaS5kZWYpOwogIGxlZ2VuZEl0ZW1zLnNvcnQoKGEsIGIpID0+IGEuZGVmLmxhYmVsLmxvY2FsZUNvbXBhcmUoYi5kZWYubGFiZWwsICdodScpKTsKCiAgLy8gUm9vbXM6IGF6IGFrdHXDoWxpcyBzemludCBzem9iw6FpLCBzb3JyZW5kYmVuIGF6IElEIHN6ZXJpbnQKICBjb25zdCByb29tc0xpc3QgPSBbLi4uZmxvb3Iucm9vbXNdLnNvcnQoKGEsIGIpID0+IGEuaWQgLSBiLmlkKTsKCiAgLy8gLS0tIE3DqXJldGVrIC0tLQogIGNvbnN0IHBhZGRpbmcgPSA0MDsKICBjb25zdCB0aXRsZUhlaWdodCA9IDgwOwogIGNvbnN0IHNlY3Rpb25IZWFkZXJIID0gMzA7CiAgY29uc3QgaWNvbkxlZ2VuZEggPSA3NTsKCiAgLy8gQsO6dG9yIGplbG1hZ3lhcsOhemF0CiAgY29uc3QgZnVybkNvbHMgPSBNYXRoLm1pbig0LCBNYXRoLm1heCgyLCBNYXRoLmZsb29yKGNhbnZhcy53aWR0aCAvIDIyMCkpKTsKICBjb25zdCBmdXJuUm93SCA9IDM0OwogIGNvbnN0IGZ1cm5Sb3dzID0gTWF0aC5jZWlsKGxlZ2VuZEl0ZW1zLmxlbmd0aCAvIGZ1cm5Db2xzKTsKICBjb25zdCBmdXJuaXR1cmVCbG9ja0ggPSBzZWN0aW9uSGVhZGVySCArIGZ1cm5Sb3dzICogZnVyblJvd0ggKyAxNTsKCiAgLy8gU3pvYmEgbGlzdGEg4oCUIDIgb3N6bG9wYmFuLCBtaW5kZWd5aWsgc29yIH4yMnB4IChhIGxlw61yw6FzIG1pYXR0IGxlaGV0IG5hZ3lvYmIpCiAgY29uc3Qgcm9vbUNvbHMgPSAyOwogIGNvbnN0IHJvb21Sb3dIID0gMjQ7CiAgY29uc3Qgcm9vbVJvd3MgPSBNYXRoLmNlaWwocm9vbXNMaXN0Lmxlbmd0aCAvIHJvb21Db2xzKTsKICBjb25zdCByb29tQmxvY2tIID0gc2VjdGlvbkhlYWRlckggKyByb29tUm93cyAqIHJvb21Sb3dIICsgMTU7CgogIGNvbnN0IHRvdGFsVyA9IGNhbnZhcy53aWR0aCArIHBhZGRpbmcgKiAyOwogIGNvbnN0IHRvdGFsSCA9IHRpdGxlSGVpZ2h0ICsgY2FudmFzLmhlaWdodCArIGljb25MZWdlbmRIICsgZnVybml0dXJlQmxvY2tIICsgcm9vbUJsb2NrSCArIHBhZGRpbmcgKiAyICsgMzA7CgogIGNvbnN0IG91dCA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoJ2NhbnZhcycpOwogIG91dC53aWR0aCA9IHRvdGFsVzsKICBvdXQuaGVpZ2h0ID0gdG90YWxIOwogIGNvbnN0IG9jdHggPSBvdXQuZ2V0Q29udGV4dCgnMmQnKTsKCiAgLy8gUGVyZ2FtZW4gaMOhdHTDqXIKICBvY3R4LmZpbGxTdHlsZSA9ICcjZjRlNGJjJzsKICBvY3R4LmZpbGxSZWN0KDAsIDAsIHRvdGFsVywgdG90YWxIKTsKCiAgLy8gU3plbWNzw6lzIHRleHTDunJhCiAgZm9yIChsZXQgaSA9IDA7IGkgPCAxMDAwMDsgaSsrKSB7CiAgICBvY3R4LmZpbGxTdHlsZSA9IGByZ2JhKDEzOSwgMTExLCA3MSwgJHtNYXRoLnJhbmRvbSgpICogMC4wN30pYDsKICAgIG9jdHguZmlsbFJlY3QoTWF0aC5yYW5kb20oKSAqIHRvdGFsVywgTWF0aC5yYW5kb20oKSAqIHRvdGFsSCwgMiwgMik7CiAgfQoKICAvLyBLw7xsc8WRIGtlcmV0CiAgb2N0eC5zdHJva2VTdHlsZSA9ICcjM2EyODE3JzsKICBvY3R4LmxpbmVXaWR0aCA9IDQ7CiAgb2N0eC5zdHJva2VSZWN0KDE1LCAxNSwgdG90YWxXIC0gMzAsIHRvdGFsSCAtIDMwKTsKICBvY3R4LmxpbmVXaWR0aCA9IDE7CiAgb2N0eC5zdHJva2VSZWN0KDIyLCAyMiwgdG90YWxXIC0gNDQsIHRvdGFsSCAtIDQ0KTsKCiAgLy8gLS0tIEPDrW1zb3IgLS0tCiAgY29uc3QgZmxvb3JMYWJlbCA9IEZMT09SX05BTUVTW01hdGgubWluKGFjdGl2ZUZsb29yICsgMSwgRkxPT1JfTkFNRVMubGVuZ3RoIC0gMSldOwogIG9jdHguZmlsbFN0eWxlID0gJyM4YjI1MDgnOwogIG9jdHguZm9udCA9IGBib2xkIDMycHggQ2luemVsLCBzZXJpZmA7CiAgb2N0eC50ZXh0QWxpZ24gPSAnY2VudGVyJzsKICBvY3R4LnRleHRCYXNlbGluZSA9ICdtaWRkbGUnOwogIG9jdHguZmlsbFRleHQoY3VycmVudEJ1aWxkaW5nLnRpdGxlLCB0b3RhbFcgLyAyLCBwYWRkaW5nICsgMjApOwoKICBvY3R4LmZpbGxTdHlsZSA9ICcjM2EyODE3JzsKICBvY3R4LmZvbnQgPSBgaXRhbGljIDE4cHggJ0lNIEZlbGwgRW5nbGlzaCcsIHNlcmlmYDsKICBvY3R4LmZpbGxUZXh0KGB+ICR7Zmxvb3JMYWJlbH0gfmAsIHRvdGFsVyAvIDIsIHBhZGRpbmcgKyA1MCk7CgogIG9jdHguc3Ryb2tlU3R5bGUgPSAnIzNhMjgxNyc7CiAgb2N0eC5saW5lV2lkdGggPSAxOwogIG9jdHguYmVnaW5QYXRoKCk7CiAgb2N0eC5tb3ZlVG8ocGFkZGluZyArIDUwLCBwYWRkaW5nICsgdGl0bGVIZWlnaHQgLSAxMCk7CiAgb2N0eC5saW5lVG8odG90YWxXIC0gcGFkZGluZyAtIDUwLCBwYWRkaW5nICsgdGl0bGVIZWlnaHQgLSAxMCk7CiAgb2N0eC5zdHJva2UoKTsKCiAgLy8gLS0tIFTDqXJrw6lwIC0tLQogIG9jdHguZHJhd0ltYWdlKGNhbnZhcywgcGFkZGluZywgcGFkZGluZyArIHRpdGxlSGVpZ2h0KTsKICBvY3R4LnN0cm9rZVN0eWxlID0gJyMzYTI4MTcnOwogIG9jdHgubGluZVdpZHRoID0gMjsKICBvY3R4LnN0cm9rZVJlY3QocGFkZGluZywgcGFkZGluZyArIHRpdGxlSGVpZ2h0LCBjYW52YXMud2lkdGgsIGNhbnZhcy5oZWlnaHQpOwoKICAvLyAtLS0tLS0tLS0tIEpFTMOWTMOJU0VLIChpa29ub2spIC0tLS0tLS0tLS0KICBsZXQgY3VycmVudFkgPSBwYWRkaW5nICsgdGl0bGVIZWlnaHQgKyBjYW52YXMuaGVpZ2h0ICsgMjA7CiAgb2N0eC5maWxsU3R5bGUgPSAnIzhiMjUwOCc7CiAgb2N0eC5mb250ID0gYGJvbGQgMTVweCBDaW56ZWwsIHNlcmlmYDsKICBvY3R4LnRleHRBbGlnbiA9ICdjZW50ZXInOwogIG9jdHguZmlsbFRleHQoJ+KAlCBKRUzDlkzDiVNFSyDigJQnLCB0b3RhbFcgLyAyLCBjdXJyZW50WSArIDgpOwoKICBjb25zdCBpY29uRGF0YSA9IFsKICAgIHsgY29sb3I6ICcjYTY3YzAwJywgc3ltYm9sOiAnJCcsIGxhYmVsOiAnS2luY3MnIH0sCiAgICB7IGNvbG9yOiAnIzhiMjUwOCcsIHN5bWJvbDogJyEnLCBsYWJlbDogJ0NzYXBkYScgfSwKICAgIHsgY29sb3I6ICcjMmQ0YTFhJywgc3ltYm9sOiAn4pynJywgbGFiZWw6ICdTesO2cm55JyB9LAogICAgeyBjb2xvcjogJyMxYTNhNWEnLCBzeW1ib2w6ICfilrLilrwnLCBsYWJlbDogJ0zDqXBjc8WRJyB9LAogIF07CiAgY29uc3QgaWNvblNwYWNpbmcgPSAodG90YWxXIC0gcGFkZGluZyAqIDIpIC8gaWNvbkRhdGEubGVuZ3RoOwogIGljb25EYXRhLmZvckVhY2goKGl0ZW0sIGkpID0+IHsKICAgIGNvbnN0IGl4ID0gcGFkZGluZyArIGljb25TcGFjaW5nICogaSArIGljb25TcGFjaW5nIC8gMiAtIDQwOwogICAgY29uc3QgaXkgPSBjdXJyZW50WSArIDQwOwogICAgb2N0eC5maWxsU3R5bGUgPSBpdGVtLmNvbG9yOwogICAgb2N0eC5iZWdpblBhdGgoKTsKICAgIG9jdHguYXJjKGl4LCBpeSwgMTEsIDAsIE1hdGguUEkgKiAyKTsKICAgIG9jdHguZmlsbCgpOwogICAgb2N0eC5zdHJva2VTdHlsZSA9ICcjM2EyODE3JzsKICAgIG9jdHgubGluZVdpZHRoID0gMTsKICAgIG9jdHguc3Ryb2tlKCk7CiAgICBvY3R4LmZpbGxTdHlsZSA9ICcjZjRlNGJjJzsKICAgIG9jdHguZm9udCA9IGBib2xkIDEzcHggQ2luemVsLCBzZXJpZmA7CiAgICBvY3R4LnRleHRBbGlnbiA9ICdjZW50ZXInOwogICAgb2N0eC50ZXh0QmFzZWxpbmUgPSAnbWlkZGxlJzsKICAgIG9jdHguZmlsbFRleHQoaXRlbS5zeW1ib2wsIGl4LCBpeSk7CiAgICBvY3R4LmZpbGxTdHlsZSA9ICcjM2EyODE3JzsKICAgIG9jdHguZm9udCA9IGAxNHB4ICdJTSBGZWxsIEVuZ2xpc2gnLCBzZXJpZmA7CiAgICBvY3R4LnRleHRBbGlnbiA9ICdsZWZ0JzsKICAgIG9jdHguZmlsbFRleHQoaXRlbS5sYWJlbCwgaXggKyAyMCwgaXkpOwogIH0pOwoKICBjdXJyZW50WSArPSBpY29uTGVnZW5kSDsKCiAgLy8gLS0tLS0tLS0tLSBCRVJFTkRFWsOJUyAoYsO6dG9yb2spIC0tLS0tLS0tLS0KICBvY3R4LmZpbGxTdHlsZSA9ICcjOGIyNTA4JzsKICBvY3R4LmZvbnQgPSBgYm9sZCAxNXB4IENpbnplbCwgc2VyaWZgOwogIG9jdHgudGV4dEFsaWduID0gJ2NlbnRlcic7CiAgb2N0eC5maWxsVGV4dCgn4oCUIEJFUkVOREVaw4lTIOKAlCcsIHRvdGFsVyAvIDIsIGN1cnJlbnRZICsgOCk7CgogIGNvbnN0IGZ1cm5Db2xXaWR0aCA9ICh0b3RhbFcgLSBwYWRkaW5nICogMikgLyBmdXJuQ29sczsKICBsZWdlbmRJdGVtcy5mb3JFYWNoKChpdGVtLCBpKSA9PiB7CiAgICBjb25zdCBjb2wgPSBpICUgZnVybkNvbHM7CiAgICBjb25zdCByb3cgPSBNYXRoLmZsb29yKGkgLyBmdXJuQ29scyk7CiAgICBjb25zdCBseCA9IHBhZGRpbmcgKyBjb2wgKiBmdXJuQ29sV2lkdGggKyAxMDsKICAgIGNvbnN0IGx5ID0gY3VycmVudFkgKyBzZWN0aW9uSGVhZGVySCArIHJvdyAqIGZ1cm5Sb3dIOwoKICAgIG9jdHguZmlsbFN0eWxlID0gaXRlbS5kZWYuY29sb3I7CiAgICBvY3R4LmZvbnQgPSBgYm9sZCAyMnB4IENpbnplbCwgc2VyaWZgOwogICAgb2N0eC50ZXh0QWxpZ24gPSAnY2VudGVyJzsKICAgIG9jdHgudGV4dEJhc2VsaW5lID0gJ21pZGRsZSc7CiAgICBvY3R4LmZpbGxUZXh0KGl0ZW0uZGVmLnN5bWJvbCwgbHggKyAxOCwgbHkgKyAxMik7CgogICAgb2N0eC5maWxsU3R5bGUgPSAnIzNhMjgxNyc7CiAgICBvY3R4LmZvbnQgPSBgMTVweCAnSU0gRmVsbCBFbmdsaXNoJywgc2VyaWZgOwogICAgb2N0eC50ZXh0QWxpZ24gPSAnbGVmdCc7CiAgICBvY3R4LmZpbGxUZXh0KGl0ZW0uZGVmLmxhYmVsLCBseCArIDQwLCBseSArIDEyKTsKICB9KTsKCiAgY3VycmVudFkgKz0gZnVybml0dXJlQmxvY2tIOwoKICAvLyAtLS0tLS0tLS0tIFNaT0LDgUsgLS0tLS0tLS0tLQogIG9jdHguZmlsbFN0eWxlID0gJyM4YjI1MDgnOwogIG9jdHguZm9udCA9IGBib2xkIDE1cHggQ2luemVsLCBzZXJpZmA7CiAgb2N0eC50ZXh0QWxpZ24gPSAnY2VudGVyJzsKICBvY3R4LmZpbGxUZXh0KCfigJQgU1pPQsOBSyDigJQnLCB0b3RhbFcgLyAyLCBjdXJyZW50WSArIDgpOwoKICBjb25zdCByb29tQ29sV2lkdGggPSAodG90YWxXIC0gcGFkZGluZyAqIDIpIC8gcm9vbUNvbHM7CiAgcm9vbXNMaXN0LmZvckVhY2goKHJvb20sIGkpID0+IHsKICAgIGNvbnN0IGNvbCA9IGkgJSByb29tQ29sczsKICAgIGNvbnN0IHJvdyA9IE1hdGguZmxvb3IoaSAvIHJvb21Db2xzKTsKICAgIGNvbnN0IGx4ID0gcGFkZGluZyArIGNvbCAqIHJvb21Db2xXaWR0aCArIDEwOwogICAgY29uc3QgbHkgPSBjdXJyZW50WSArIHNlY3Rpb25IZWFkZXJIICsgcm93ICogcm9vbVJvd0g7CgogICAgLy8gU3pvYmEgc3rDoW0g4oCUIGvDtnJiZW4KICAgIG9jdHguZmlsbFN0eWxlID0gJyMzYTI4MTcnOwogICAgb2N0eC5iZWdpblBhdGgoKTsKICAgIG9jdHguYXJjKGx4ICsgMTQsIGx5ICsgOCwgMTEsIDAsIE1hdGguUEkgKiAyKTsKICAgIG9jdHguZmlsbCgpOwogICAgb2N0eC5maWxsU3R5bGUgPSAnI2Y0ZTRiYyc7CiAgICBvY3R4LmZvbnQgPSBgYm9sZCAxMnB4IENpbnplbCwgc2VyaWZgOwogICAgb2N0eC50ZXh0QWxpZ24gPSAnY2VudGVyJzsKICAgIG9jdHgudGV4dEJhc2VsaW5lID0gJ21pZGRsZSc7CiAgICBvY3R4LmZpbGxUZXh0KHJvb20uaWQsIGx4ICsgMTQsIGx5ICsgOCk7CgogICAgLy8gU3pvYmEgbmV2ZQogICAgb2N0eC5maWxsU3R5bGUgPSAnIzNhMjgxNyc7CiAgICBvY3R4LmZvbnQgPSBgMTVweCAnSU0gRmVsbCBFbmdsaXNoJywgc2VyaWZgOwogICAgb2N0eC50ZXh0QWxpZ24gPSAnbGVmdCc7CiAgICBvY3R4LnRleHRCYXNlbGluZSA9ICdtaWRkbGUnOwogICAgbGV0IG5hbWVUZXh0ID0gcm9vbS5uYW1lOwogICAgb2N0eC5maWxsVGV4dChuYW1lVGV4dCwgbHggKyAzMiwgbHkgKyA4KTsKCiAgICAvLyBJa29ub2sgYSBuw6l2IHV0w6FuIChraW5jcyAvIGNzYXBkYSAvIHN6w7ZybnkgLyBsw6lwY3PFkSkKICAgIGxldCBpeCA9IGx4ICsgMzIgKyBvY3R4Lm1lYXN1cmVUZXh0KG5hbWVUZXh0KS53aWR0aCArIDEwOwogICAgY29uc3QgaXlTbWFsbCA9IGx5ICsgODsKICAgIGNvbnN0IGRyYXdTbWFsbEljb24gPSAoY29sb3IsIHN5bWJvbCkgPT4gewogICAgICBvY3R4LmZpbGxTdHlsZSA9IGNvbG9yOwogICAgICBvY3R4LmJlZ2luUGF0aCgpOwogICAgICBvY3R4LmFyYyhpeCArIDYsIGl5U21hbGwsIDcsIDAsIE1hdGguUEkgKiAyKTsKICAgICAgb2N0eC5maWxsKCk7CiAgICAgIG9jdHguZmlsbFN0eWxlID0gJyNmNGU0YmMnOwogICAgICBvY3R4LmZvbnQgPSBgYm9sZCA5cHggQ2luemVsLCBzZXJpZmA7CiAgICAgIG9jdHgudGV4dEFsaWduID0gJ2NlbnRlcic7CiAgICAgIG9jdHgudGV4dEJhc2VsaW5lID0gJ21pZGRsZSc7CiAgICAgIG9jdHguZmlsbFRleHQoc3ltYm9sLCBpeCArIDYsIGl5U21hbGwpOwogICAgICBpeCArPSAxNjsKICAgIH07CiAgICBpZiAocm9vbS5oYXNMb290KSBkcmF3U21hbGxJY29uKCcjYTY3YzAwJywgJyQnKTsKICAgIGlmIChyb29tLmhhc1RyYXApIGRyYXdTbWFsbEljb24oJyM4YjI1MDgnLCAnIScpOwogICAgaWYgKHJvb20uaGFzQ3JlYXR1cmUpIGRyYXdTbWFsbEljb24oJyMyZDRhMWEnLCAn4pynJyk7CiAgICBpZiAocm9vbS5zdGFpcnMpIGRyYXdTbWFsbEljb24oJyMxYTNhNWEnLCByb29tLnN0YWlycy5kaXJlY3Rpb24gPT09ICd1cCcgPyAn4payJyA6ICfilrwnKTsKICB9KTsKCiAgLy8gTWVudMOpcwogIGNvbnN0IGxpbmsgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdhJyk7CiAgbGluay5kb3dubG9hZCA9IGAke2N1cnJlbnRCdWlsZGluZy50aXRsZS5yZXBsYWNlKC9ccysvZywgJ18nKX1fJHtmbG9vckxhYmVsLnJlcGxhY2UoL1xzKy9nLCAnXycpfS5wbmdgOwogIGxpbmsuaHJlZiA9IG91dC50b0RhdGFVUkwoJ2ltYWdlL3BuZycpOwogIGxpbmsuY2xpY2soKTsKfQoKZ2VuZXJhdGVCdWlsZGluZygpOwo8L3NjcmlwdD4KPC9ib2R5Pgo8L2h0bWw+Cg==";
+
+function BuildingTab() {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <div>
+      <div className="ornament-divider">
+        <span style={{ fontFamily: 'Cinzel, serif', fontSize: '14px', letterSpacing: '0.3em', color: palette.gold }}>
+          BUILDING FORGE
+        </span>
+      </div>
+
+      <div style={{ marginBottom: '16px', textAlign: 'center', color: palette.textDim, fontSize: '13px', fontStyle: 'italic' }}>
+        Forge taverns, dungeons, mansions, towers, temples, ruins, and thieves' guilds — with floor plans, traps, loot, and creature placements.
+      </div>
+
+      {open ? (
+        <div style={{
+          background: palette.bg,
+          border: `1px solid ${palette.border}`,
+          padding: 0,
+          position: 'relative',
+        }}>
+          <button
+            onClick={() => {
+              const win = window.open('', '_blank');
+              if (win) {
+                win.document.write(atob(BUILDING_HTML_B64));
+                win.document.close();
+              }
+            }}
+            className="btn-secondary"
+            style={{
+              position: 'absolute',
+              top: '8px', right: '8px',
+              zIndex: 10,
+            }}
+            title="Open in new tab for fullscreen"
+          >
+            <ExternalLink size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }}/>
+            Pop Out
+          </button>
+          <iframe
+            src={`data:text/html;base64,${BUILDING_HTML_B64}`}
+            title="Building Forge"
+            style={{
+              width: '100%',
+              height: '900px',
+              border: 'none',
+              display: 'block',
+            }}
+            sandbox="allow-scripts allow-same-origin allow-downloads"
+          />
+        </div>
+      ) : (
+        <div className="panel" style={{ textAlign: 'center', padding: '60px 24px', color: palette.textMuted }}>
+          <BuildingIcon size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
+          <div style={{ fontFamily: 'IM Fell English SC, serif', fontSize: '14px', letterSpacing: '0.1em' }}>
+            Building generator hidden
+          </div>
+          <button className="btn-primary" onClick={() => setOpen(true)} style={{ marginTop: '16px' }}>
+            Show Generator
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
